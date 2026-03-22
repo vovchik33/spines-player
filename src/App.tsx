@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { DraggableArea } from './DraggableArea/DraggableArea'
 import { Pixi8SpinePlayer } from './SpinePlayer/SpinePlayer'
 import styles from './App.module.scss'
 
@@ -19,18 +20,16 @@ export default function App() {
     setLayoutResetToken((n) => n + 1)
   }
 
-  useEffect(() => {
-    if (animations.length === 0) return
-    if (!animations.includes(animation)) {
-      setAnimation(animations[0])
-    }
-  }, [animations, animation])
+  const selectedAnimation =
+    animations.length > 0 && !animations.includes(animation)
+      ? animations[0]
+      : animation
 
   return (
     <div className={styles.layout}>
       <div className={styles.shell}>
         <aside className={styles.panel} aria-label="Spine configuration">
-          <h1 className={styles.title}>Spine</h1>
+          <h1 className={styles.title}>Settings</h1>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="animation-select">
               Animation
@@ -41,7 +40,7 @@ export default function App() {
               <select
                 id="animation-select"
                 className={styles.select}
-                value={animation}
+                value={selectedAnimation}
                 onChange={(e) => setAnimation(e.target.value)}
               >
                 {animations.map((name) => (
@@ -81,14 +80,15 @@ export default function App() {
           </div>
         </aside>
         <main className={styles.player}>
-          <Pixi8SpinePlayer
-            skeletonUrl={`${base}spine/Cat.json`}
-            atlasUrl={`${base}spine/Cat.atlas`}
-            animation={animation}
-            canvasScale={canvasScale}
-            layoutResetToken={layoutResetToken}
-            onAnimationsLoaded={setAnimations}
-          />
+          <DraggableArea scale={canvasScale} layoutResetToken={layoutResetToken}>
+            <Pixi8SpinePlayer
+              skeletonUrl={`${base}spine/Cat.json`}
+              atlasUrl={`${base}spine/Cat.atlas`}
+              animation={selectedAnimation}
+              layoutResetToken={layoutResetToken}
+              onAnimationsLoaded={setAnimations}
+            />
+          </DraggableArea>
         </main>
       </div>
     </div>
