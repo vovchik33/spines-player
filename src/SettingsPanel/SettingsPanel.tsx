@@ -31,6 +31,7 @@ export interface SettingsPanelProps {
   onCanvasScaleChange: (scale: number) => void
   animationSpeed: number
   onAnimationSpeedChange: (speed: number) => void
+  onResetAnimationSpeed: () => void
   onResetLayout: () => void
   onLoadSpineFiles?: (files: File[]) => void
   spineLoadError?: string | null
@@ -52,6 +53,7 @@ export function SettingsPanel({
   onCanvasScaleChange,
   animationSpeed,
   onAnimationSpeedChange,
+  onResetAnimationSpeed,
   onResetLayout,
   onLoadSpineFiles,
   spineLoadError,
@@ -121,7 +123,10 @@ export function SettingsPanel({
               id="animation-select"
               className={`${styles.select} ${styles.selectInline}`}
               value={selectedAnimation}
-              onChange={(e) => onAnimationChange(e.target.value)}
+              onChange={(e) => {
+                onAnimationChange(e.target.value)
+                e.currentTarget.blur()
+              }}
             >
               {animations.map((name) => (
                 <option key={name} value={name}>
@@ -213,6 +218,14 @@ export function SettingsPanel({
             <span className={styles.scaleValue} aria-live="polite">
               {animationSpeed.toFixed(2)}×
             </span>
+            <button
+              type="button"
+              className={styles.resetButton}
+              onClick={onResetAnimationSpeed}
+              aria-label="Reset animation speed to 1×"
+            >
+              Reset
+            </button>
           </div>
         </div>
         <input

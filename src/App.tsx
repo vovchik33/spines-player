@@ -59,7 +59,7 @@ export default function App() {
     }
   }, [bumpPlayback])
 
-  /** Pause when playing; press again to resume (same as Space). */
+  /** Pause when playing; press again to resume (same as P key). */
   const handlePause = useCallback(() => {
     const prev = playbackTransportRef.current
     if (prev === 'paused') {
@@ -106,7 +106,8 @@ export default function App() {
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || e.repeat) return
+      if (e.code !== 'KeyP' || e.repeat) return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
       if (isEditableKeyTarget(e.target)) return
       e.preventDefault()
       const prev = playbackTransportRef.current
@@ -150,6 +151,7 @@ export default function App() {
       setAnimations([])
       setPlaybackTransport('playing')
       setAnimationLoop(true)
+      setCanvasScale(INITIAL_CANVAS_SCALE)
       setAnimationSpeed(INITIAL_ANIMATION_SPEED)
       setPlaybackNonce((n) => n + 1)
       setCustomSpine((prev) => {
@@ -172,6 +174,10 @@ export default function App() {
     setAnimationSpeed(INITIAL_ANIMATION_SPEED)
     setLayoutResetToken((n) => n + 1)
   }
+
+  const resetAnimationSpeed = useCallback(() => {
+    setAnimationSpeed(INITIAL_ANIMATION_SPEED)
+  }, [])
 
   const applySpineScaleDelta = useCallback((delta: number) => {
     setCanvasScale((s) =>
@@ -212,6 +218,7 @@ export default function App() {
           onCanvasScaleChange={setCanvasScale}
           animationSpeed={animationSpeed}
           onAnimationSpeedChange={setAnimationSpeed}
+          onResetAnimationSpeed={resetAnimationSpeed}
           onResetLayout={resetLayout}
           onLoadSpineFiles={handleLoadSpineFiles}
           spineLoadError={spineLoadError}
