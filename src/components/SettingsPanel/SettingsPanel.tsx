@@ -256,6 +256,32 @@ export function SettingsPanel({
           {...rangeReleaseFocusProps}
         />
       </div>
+      <div className={styles.shortcutsBlock}>
+        <p className={styles.shortcutsTitle}>Mouse</p>
+        <ul className={styles.shortcutsList}>
+          <li>
+            <strong>Wheel</strong> — zoom in/out
+          </li>
+          <li>
+            <strong>Shift</strong> + wheel — change animation speed
+          </li>
+        </ul>
+        <p className={styles.shortcutsTitle}>Keyboard</p>
+        <ul className={styles.shortcutsList}>
+          <li>
+            <strong>P</strong> — pause / play
+          </li>
+          <li>
+            <strong>↑</strong> <strong>↓</strong> — previous / next animation
+          </li>
+          <li>
+            <strong>+</strong> <strong>−</strong> — zoom in/out
+          </li>
+          <li>
+            <strong>←</strong> <strong>→</strong> — even slower / faster speed
+          </li>
+        </ul>
+      </div>
     </aside>
   )
 }

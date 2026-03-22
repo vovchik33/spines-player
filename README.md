@@ -77,7 +77,7 @@ Shortcuts are ignored while focus is in a **button**, **link**, **text field**, 
 | Gesture | Effect |
 | ------- | ------ |
 | Wheel (no modifiers) | **Zoom** spine display (same idea as the scale slider; clamped **0.1×–3×**). |
-| **Ctrl** or **Shift** + wheel | **Animation speed** up/down (same step family as the slider, clamped **0.1×–3×**). Uses the larger of **\|deltaX\|** vs **\|deltaY\|** so **Shift** + vertical scroll still works when the browser maps it to horizontal delta. |
+| **Shift** + wheel | **Animation speed** up/down (same step family as the slider, clamped **0.1×–3×**). Uses the larger of **\|deltaX\|** vs **\|deltaY\|** so **Shift** + vertical scroll still works when the browser maps it to horizontal delta. |
 
 Wheel handler uses **non-passive** `preventDefault` where it handles the event so the page does not scroll instead.
 

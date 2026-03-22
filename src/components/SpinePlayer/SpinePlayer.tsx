@@ -196,7 +196,7 @@ interface Props {
   onAnimationsLoaded?: (animationNames: string[]) => void;
   /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
   onSpineScaleDelta?: (delta: number) => void;
-  /** Ctrl or Shift + wheel over canvas: delta adjusts playback speed like the slider (caller clamps). */
+  /** Shift + wheel over canvas: delta adjusts playback speed like the slider (caller clamps). */
   onAnimationSpeedDelta?: (delta: number) => void;
 }
 
@@ -507,7 +507,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
 
       const WHEEL_SCALE_STEP = 0.06;
       const onWheel = (e: WheelEvent) => {
-        if (e.ctrlKey || e.shiftKey) {
+        if (e.shiftKey) {
           const speedFn = onAnimationSpeedDeltaRef.current;
           if (!speedFn) return;
           // Shift+wheel often maps vertical motion to deltaX; deltaY can stay 0 (was always “slower”).
