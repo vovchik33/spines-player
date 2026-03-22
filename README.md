@@ -1,73 +1,96 @@
-# React + TypeScript + Vite
+# spines-player
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web viewer for [Spine](http://esotericsoftware.com/) skeletal animations: load exported skeleton + atlas + texture, pick clips, control playback, scale, and speed. Built with **React**, **Pixi.js v8**, and **@esotericsoftware/spine-pixi-v8**.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js (for local dev)
 
-## React Compiler
+## Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Command        | Description                          |
+| -------------- | ------------------------------------ |
+| `npm run dev`  | Vite dev server with HMR             |
+| `npm run build`| TypeScript check + production bundle   |
+| `npm run preview` | Serve the `dist` build after build |
+| `npm run lint` | ESLint                               |
 
-## Expanding the ESLint configuration
+## Layout
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Left:** configuration panel (scrolls when content is tall; scrollbar is hidden but wheel / trackpad still scrolls).
+- **Right:** Pixi canvas showing the Spine character. **Drag** with the pointer to **pan** the skeleton inside the view.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Loading a Spine
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. Click **Choose…** and select **exactly three** files in one go:
+   - **Skeleton:** `.json` or `.skel`
+   - **Atlas:** `.atlas`
+   - **Texture:** `.png`, `.jpg`, `.jpeg`, or `.webp` (must match the atlas page name)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. The panel shows the current asset name (bundled sample **Cat** until you load your own).
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+3. If the selection is invalid, an error message explains what is wrong.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Loading a new pack **resets** spine **scale**, **animation speed**, and starts playback in **loop** at **1×** speed. It does **not** run the full **Reset** (see below).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Default sample
+
+If you do not load custom files, the app uses the bundled **Cat** skeleton from `public/spine/` (paths respect Vite `base`).
+
+## Animation list & playback
+
+- **Animation** dropdown lists all clips from the skeleton. After you pick one, the dropdown **blurs** so global shortcuts work without an extra click.
+- **Play** — starts or **restarts** the current clip (from pause or from stop, or replay while already playing). **Resume** from pause does **not** restart the timeline.
+- **Pause** — freezes the clip (`timeScale` 0); press again to **resume** from the same frame (**toggle**, same idea as **P**).
+- **Stop** — clears the track and returns the skeleton to the **setup pose**.
+- **Loop animation** — when checked, the active track loops; when unchecked, it plays **once** (then stops at the end unless you change mode).
+
+**Pause** is disabled while **stopped**.
+
+## Spine scale
+
+- **Slider:** **0.1×** … **3×**, step **0.05**.
+- **Reset** (next to the slider) also resets **animation speed** to **1×**, **clears pan**, and triggers a layout remeasure for the renderer.
+
+## Animation speed
+
+Controls Spine `AnimationState.timeScale` while **playing** (paused stays frozen; stopped ignores speed until you play again).
+
+- **Slider:** **0.1×** … **3×**, step **0.05**.
+- **Reset** (next to the speed slider) sets speed to **1×** only (does not change scale or pan).
+
+## Keyboard shortcuts
+
+Shortcuts are ignored while focus is in a **button**, **link**, **text field**, **range slider**, **`select`**, **`textarea`**, or **`contenteditable`**. They use physical **`KeyboardEvent.code`** where noted so layout (e.g. QWERTY vs other) does not change bindings.
+
+| Action | Keys |
+| ------ | ---- |
+| Pause / play toggle | **P** (no repeat; **Ctrl / Cmd / Alt** not used) |
+| Previous / next animation (dropdown order, wraps) | **Arrow Up** / **Arrow Down** |
+| Decrease / increase animation speed | **Arrow Left** / **Arrow Right** |
+| Decrease / increase spine scale | **Minus** or **NumpadSubtract** / **Equal** or **NumpadAdd** (`=` and `+` share the **Equal** key) |
+
+**Range sliders:** after pointer **up** or **cancel**, the control **blurs**. **Escape** blurs a focused slider for keyboard users.
+
+## Mouse wheel on the canvas
+
+| Gesture | Effect |
+| ------- | ------ |
+| Wheel (no modifiers) | **Zoom** spine display (same idea as the scale slider; clamped **0.1×–3×**). |
+| **Ctrl** or **Shift** + wheel | **Animation speed** up/down (same step family as the slider, clamped **0.1×–3×**). Uses the larger of **\|deltaX\|** vs **\|deltaY\|** so **Shift** + vertical scroll still works when the browser maps it to horizontal delta. |
+
+Wheel handler uses **non-passive** `preventDefault` where it handles the event so the page does not scroll instead.
+
+## Stack
+
+- **React** + **TypeScript** + **Vite**
+- **pixi.js** 8.x, **@esotericsoftware/spine-pixi-v8** (Spine 4.2 runtime for Pixi v8)
+- **Sass** for component styles
+
+## Project structure (high level)
+
+- `src/App.tsx` — app state, shortcuts, load pipeline, passes props to panel + player.
+- `src/components/SettingsPanel/` — file load UI, animation select, playback, sliders.
+- `src/components/SpinePlayer/SpinePlayer.tsx` — Pixi app, Spine instance, pan, wheel zoom / speed, sync with React props.
+- `src/utils/loadSpineFiles.ts` — classify three picked files, object URLs for blobs.
+- `src/utils/spineViewScale.ts` — shared min/max/step for scale and animation speed (sliders, wheel, keyboard).

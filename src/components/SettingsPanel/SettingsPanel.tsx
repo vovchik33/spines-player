@@ -7,7 +7,7 @@ import {
   SPINE_VIEW_SCALE_MAX,
   SPINE_VIEW_SCALE_MIN,
   SPINE_VIEW_SCALE_STEP,
-} from '../spineViewScale'
+} from '../../utils/spineViewScale'
 import styles from './SettingsPanel.module.scss'
 
 const SCALE_MIN = SPINE_VIEW_SCALE_MIN

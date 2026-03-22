@@ -7,7 +7,7 @@ import {
 } from '@esotericsoftware/spine-core';
 import { Application, Assets, Cache, Texture } from 'pixi.js';
 import { Spine, SpineTexture } from '@esotericsoftware/spine-pixi-v8'; // Official v8 runtime
-import { SPINE_ANIMATION_SPEED_STEP } from '../spineViewScale';
+import { SPINE_ANIMATION_SPEED_STEP } from '../../utils/spineViewScale';
 import styles from './SpinePlayer.module.scss';
 
 const SPINE_DATA_SCALE = 1;

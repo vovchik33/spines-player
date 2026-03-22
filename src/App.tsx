@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Pixi8SpinePlayer,
   type SpinePlaybackTransport,
-} from './SpinePlayer/SpinePlayer'
-import { SettingsPanel } from './SettingsPanel/SettingsPanel'
+} from './components/SpinePlayer/SpinePlayer'
+import { SettingsPanel } from './components/SettingsPanel/SettingsPanel'
 import {
   classifySpineFiles,
   createSpineObjectUrls,
   getAtlasPageName,
-} from './spine/loadSpineFiles'
+} from './utils/loadSpineFiles'
 import {
   SPINE_ANIMATION_SPEED_MAX,
   SPINE_ANIMATION_SPEED_MIN,
@@ -16,7 +16,7 @@ import {
   SPINE_VIEW_SCALE_MAX,
   SPINE_VIEW_SCALE_MIN,
   SPINE_VIEW_SCALE_STEP,
-} from './spineViewScale'
+} from './utils/spineViewScale'
 import styles from './App.module.scss'
 
 const INITIAL_CANVAS_SCALE = 1
