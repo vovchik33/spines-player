@@ -148,7 +148,7 @@ export function SettingsPanel({
       <div className={styles.field}>
         <div className={styles.scaleHeader}>
           <label className={styles.label} htmlFor="scale-slider">
-            Canvas scale
+            Spine scale
           </label>
           <div className={styles.scaleHeaderActions}>
             <span className={styles.scaleValue} aria-live="polite">

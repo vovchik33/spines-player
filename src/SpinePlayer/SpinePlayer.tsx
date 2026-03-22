@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef } from 'react';
 import {
   AtlasAttachmentLoader,
   SkeletonBinary,
@@ -7,10 +7,12 @@ import {
 } from '@esotericsoftware/spine-core';
 import { Application, Assets, Cache, Texture } from 'pixi.js';
 import { Spine, SpineTexture } from '@esotericsoftware/spine-pixi-v8'; // Official v8 runtime
-import { DRAGGABLE_LAYOUT_MEASURE_SELECTOR } from '../DraggableArea/DraggableArea';
 import styles from './SpinePlayer.module.scss';
 
 const SPINE_DATA_SCALE = 1;
+
+/** Host or ancestor with this attribute supplies layout size for Pixi init / resize. */
+const LAYOUT_MEASURE_SELECTOR = '[data-layout-measure]';
 
 /** Duck-type: Vite can bundle two copies of spine-core, so `instanceof TextureAtlas` may fail. */
 function isLikelySpineTextureAtlas(v: unknown): v is TextureAtlas {
@@ -180,7 +182,9 @@ interface Props {
   /** How the selected clip should play; bump {@link playbackNonce} to restart Play / Play Loop. */
   playbackMode: SpinePlaybackMode;
   playbackNonce: number;
-  /** Increment to remeasure canvas / renderer size (e.g. reset control). */
+  /** Uniform scale of the Spine inside the canvas (does not resize the canvas element). */
+  spineScale: number;
+  /** Increment to remeasure renderer, reset pan, and reapply {@link spineScale}. */
   layoutResetToken?: number;
   /** Fired once the skeleton is built; names come from {@link SkeletonData#animations}. */
   onAnimationsLoaded?: (animationNames: string[]) => void;
@@ -188,9 +192,7 @@ interface Props {
 
 function getLayoutElement(host: HTMLElement): HTMLElement {
   return (
-    host.closest(DRAGGABLE_LAYOUT_MEASURE_SELECTOR) ??
-    host.parentElement ??
-    host
+    host.closest(LAYOUT_MEASURE_SELECTOR) ?? host.parentElement ?? host
   );
 }
 
@@ -237,6 +239,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   animation,
   playbackMode,
   playbackNonce,
+  spineScale,
   layoutResetToken = 0,
   onAnimationsLoaded,
 }) => {
@@ -246,7 +249,29 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const spineRef = useRef<Spine | null>(null);
+  const spineScaleRef = useRef(spineScale);
+  const panRef = useRef({ x: 0, y: 0 });
+  const applyViewRef = useRef<() => void>(() => {});
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
+
+  const applySpineViewTransform = useCallback(() => {
+    const app = appRef.current;
+    const spine = spineRef.current;
+    const host = containerRef.current;
+    if (!app || !spine || !host) return;
+    const layoutEl = getLayoutElement(host);
+    const width = Math.max(1, Math.floor(layoutEl.clientWidth));
+    const height = Math.max(1, Math.floor(layoutEl.clientHeight));
+    const s = spineScaleRef.current;
+    spine.scale.set(s, s);
+    spine.position.set(width / 2 + panRef.current.x, height / 2 + panRef.current.y);
+  }, []);
+
+  useLayoutEffect(() => {
+    spineScaleRef.current = spineScale;
+    applyViewRef.current = applySpineViewTransform;
+    applySpineViewTransform();
+  }, [spineScale, applySpineViewTransform]);
 
   useEffect(() => {
     onAnimationsLoadedRef.current = onAnimationsLoaded;
@@ -259,9 +284,12 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     const skelAlias = `spineSkel_${loadId}_${seq}`;
     const atlasAlias = `spineAtlas_${loadId}_${seq}`;
     let registeredPixiAssetAliases = false;
+    let detachCanvasPointers: (() => void) | undefined;
 
     const initPixi = async () => {
       if (!containerRef.current) return;
+
+      panRef.current = { x: 0, y: 0 };
 
       console.log('[SpinePlayer] init start', {
         skelAlias,
@@ -351,7 +379,6 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
 
       spineRef.current = spine;
       spine.autoUpdate = true;
-      spine.position.set(app.screen.width / 2, app.screen.height / 2);
       syncSpinePlayback(spine, animation, playbackMode);
 
       const names = spine.skeleton.data.animations.map((a) => a.name);
@@ -359,7 +386,76 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       onAnimationsLoadedRef.current?.(names);
 
       app.stage.addChild(spine);
-      console.log('[SpinePlayer] spine added to stage; init done');
+
+      const canvas = app.canvas as HTMLCanvasElement;
+      canvas.style.touchAction = 'none';
+      canvas.style.cursor = 'grab';
+
+      const drag = {
+        active: false,
+        pointerId: -1,
+        startClientX: 0,
+        startClientY: 0,
+        panStart: { x: 0, y: 0 },
+      };
+
+      const setGrabCursor = (grabbing: boolean) => {
+        canvas.style.cursor = grabbing ? 'grabbing' : 'grab';
+      };
+
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        drag.active = true;
+        drag.pointerId = e.pointerId;
+        drag.startClientX = e.clientX;
+        drag.startClientY = e.clientY;
+        drag.panStart = { ...panRef.current };
+        setGrabCursor(true);
+        canvas.setPointerCapture(e.pointerId);
+      };
+
+      const onPointerMove = (e: PointerEvent) => {
+        if (!drag.active || e.pointerId !== drag.pointerId) return;
+        panRef.current.x =
+          drag.panStart.x + (e.clientX - drag.startClientX);
+        panRef.current.y =
+          drag.panStart.y + (e.clientY - drag.startClientY);
+        applyViewRef.current();
+      };
+
+      const endDrag = (e: PointerEvent) => {
+        if (!drag.active || e.pointerId !== drag.pointerId) return;
+        drag.active = false;
+        setGrabCursor(false);
+        try {
+          canvas.releasePointerCapture(e.pointerId);
+        } catch {
+          /* already released */
+        }
+      };
+
+      const onLostPointerCapture = () => {
+        drag.active = false;
+        setGrabCursor(false);
+      };
+
+      canvas.addEventListener('pointerdown', onPointerDown);
+      canvas.addEventListener('pointermove', onPointerMove);
+      canvas.addEventListener('pointerup', endDrag);
+      canvas.addEventListener('pointercancel', endDrag);
+      canvas.addEventListener('lostpointercapture', onLostPointerCapture);
+
+      detachCanvasPointers = () => {
+        canvas.removeEventListener('pointerdown', onPointerDown);
+        canvas.removeEventListener('pointermove', onPointerMove);
+        canvas.removeEventListener('pointerup', endDrag);
+        canvas.removeEventListener('pointercancel', endDrag);
+        canvas.removeEventListener('lostpointercapture', onLostPointerCapture);
+      };
+
+      applyViewRef.current();
+      console.log('[SpinePlayer] spine added to stage; pointer pan + scale on Spine; init done');
     };
 
     initPixi().catch((err) => {
@@ -375,6 +471,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     return () => {
       console.log('[SpinePlayer] cleanup: destroy Pixi app', { skelAlias, atlasAlias });
       cancelled = true;
+      detachCanvasPointers?.();
       spineRef.current = null;
       if (appRef.current) {
         appRef.current.destroy(true, { children: true, texture: true });
@@ -412,9 +509,10 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       const width = Math.max(1, Math.floor(layoutEl.clientWidth));
       const height = Math.max(1, Math.floor(layoutEl.clientHeight));
 
+      panRef.current = { x: 0, y: 0 };
       app.renderer.resize(width, height);
-      spine.position.set(width / 2, height / 2);
-      console.log('[SpinePlayer] layout reset: renderer.resize + spine centered', {
+      applyViewRef.current();
+      console.log('[SpinePlayer] layout reset: resize + pan cleared + spine transform', {
         layoutResetToken,
         width,
         height,

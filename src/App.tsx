@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DraggableArea } from './DraggableArea/DraggableArea'
 import {
   Pixi8SpinePlayer,
   type SpinePlaybackMode,
@@ -115,7 +114,7 @@ export default function App() {
   }, [])
 
   const resetLayout = () => {
-    console.log('[App] Reset layout (scale + pan + canvas remeasure)')
+    console.log('[App] Reset layout (spine scale + pan + renderer remeasure)')
     setCanvasScale(INITIAL_CANVAS_SCALE)
     setLayoutResetToken((n) => n + 1)
   }
@@ -152,7 +151,7 @@ export default function App() {
           loadedSpineName={loadedSpineName}
         />
         <main className={styles.player}>
-          <DraggableArea scale={canvasScale} layoutResetToken={layoutResetToken}>
+          <div className={styles.playerMeasure} data-layout-measure>
             <Pixi8SpinePlayer
               skeletonUrl={skeletonUrl}
               atlasUrl={atlasUrl}
@@ -160,13 +159,14 @@ export default function App() {
               animation={selectedAnimation}
               playbackMode={playbackMode}
               playbackNonce={playbackNonce}
+              spineScale={canvasScale}
               layoutResetToken={layoutResetToken}
               onAnimationsLoaded={(names) => {
                 console.log('[App] onAnimationsLoaded', { count: names.length, names })
                 setAnimations(names)
               }}
             />
-          </DraggableArea>
+          </div>
         </main>
       </div>
     </div>
