@@ -24,16 +24,16 @@ export function SettingsPanel({
   return (
     <aside className={styles.panel} aria-label="Spine configuration">
       <h1 className={styles.title}>Settings</h1>
-      <div className={styles.field}>
+      <div className={styles.animationRow}>
         <label className={styles.label} htmlFor="animation-select">
           Animation
         </label>
         {animations.length === 0 ? (
-          <p className={styles.muted}>Loading animations…</p>
+          <p className={styles.mutedInline}>Loading animations…</p>
         ) : (
           <select
             id="animation-select"
-            className={styles.select}
+            className={`${styles.select} ${styles.selectInline}`}
             value={selectedAnimation}
             onChange={(e) => onAnimationChange(e.target.value)}
           >
