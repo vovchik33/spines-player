@@ -7,6 +7,7 @@ import {
 } from '@esotericsoftware/spine-core';
 import { Application, Assets, Cache, Texture } from 'pixi.js';
 import { Spine, SpineTexture } from '@esotericsoftware/spine-pixi-v8'; // Official v8 runtime
+import { SPINE_ANIMATION_SPEED_STEP } from '../spineViewScale';
 import styles from './SpinePlayer.module.scss';
 
 const SPINE_DATA_SCALE = 1;
@@ -195,6 +196,8 @@ interface Props {
   onAnimationsLoaded?: (animationNames: string[]) => void;
   /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
   onSpineScaleDelta?: (delta: number) => void;
+  /** Ctrl or Shift + wheel over canvas: delta adjusts playback speed like the slider (caller clamps). */
+  onAnimationSpeedDelta?: (delta: number) => void;
 }
 
 function getLayoutElement(host: HTMLElement): HTMLElement {
@@ -277,6 +280,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   layoutResetToken = 0,
   onAnimationsLoaded,
   onSpineScaleDelta,
+  onAnimationSpeedDelta,
 }) => {
   /** Disambiguate multiple player instances; aliases also get a per-load seq (see loadSeqRef). */
   const loadId = useId().replace(/:/g, '');
@@ -289,6 +293,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   const applyViewRef = useRef<() => void>(() => {});
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
   const onSpineScaleDeltaRef = useRef(onSpineScaleDelta);
+  const onAnimationSpeedDeltaRef = useRef(onAnimationSpeedDelta);
   const lastPlaybackNonceRef = useRef<number | null>(null);
 
   const applySpineViewTransform = useCallback(() => {
@@ -317,6 +322,10 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   useEffect(() => {
     onSpineScaleDeltaRef.current = onSpineScaleDelta;
   }, [onSpineScaleDelta]);
+
+  useEffect(() => {
+    onAnimationSpeedDeltaRef.current = onAnimationSpeedDelta;
+  }, [onAnimationSpeedDelta]);
 
   useEffect(() => {
     let cancelled = false;
@@ -496,15 +505,27 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       canvas.addEventListener('pointercancel', endDrag);
       canvas.addEventListener('lostpointercapture', onLostPointerCapture);
 
-      const WHEEL_STEP = 0.06;
+      const WHEEL_SCALE_STEP = 0.06;
       const onWheel = (e: WheelEvent) => {
-        const fn = onSpineScaleDeltaRef.current;
-        if (!fn) return;
+        if (e.ctrlKey || e.shiftKey) {
+          const speedFn = onAnimationSpeedDeltaRef.current;
+          if (!speedFn) return;
+          // Shift+wheel often maps vertical motion to deltaX; deltaY can stay 0 (was always “slower”).
+          const delta =
+            Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          if (delta === 0) return;
+          e.preventDefault();
+          const direction = delta < 0 ? 1 : -1;
+          const magnitude = Math.min(3, 1 + Math.abs(delta) / 100);
+          speedFn(direction * SPINE_ANIMATION_SPEED_STEP * magnitude);
+          return;
+        }
+        const scaleFn = onSpineScaleDeltaRef.current;
+        if (!scaleFn) return;
         e.preventDefault();
-        // deltaY > 0: scroll down → zoom out; deltaY < 0: zoom in
         const direction = e.deltaY < 0 ? 1 : -1;
         const magnitude = Math.min(3, 1 + Math.abs(e.deltaY) / 100);
-        fn(direction * WHEEL_STEP * magnitude);
+        scaleFn(direction * WHEEL_SCALE_STEP * magnitude);
       };
 
       canvas.addEventListener('wheel', onWheel, { passive: false });

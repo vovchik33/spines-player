@@ -254,6 +254,15 @@ export default function App() {
     )
   }, [])
 
+  const applyAnimationSpeedDelta = useCallback((delta: number) => {
+    setAnimationSpeed((s) =>
+      Math.min(
+        SPINE_ANIMATION_SPEED_MAX,
+        Math.max(SPINE_ANIMATION_SPEED_MIN, s + delta),
+      ),
+    )
+  }, [])
+
   // While the list is empty (e.g. after Load Spine), avoid passing a stale clip name to the player.
   const selectedAnimation =
     animations.length === 0
@@ -304,6 +313,7 @@ export default function App() {
               spineScale={canvasScale}
               layoutResetToken={layoutResetToken}
               onSpineScaleDelta={applySpineScaleDelta}
+              onAnimationSpeedDelta={applyAnimationSpeedDelta}
               onAnimationsLoaded={(names) => {
                 console.log('[App] onAnimationsLoaded', { count: names.length, names })
                 setAnimations(names)
