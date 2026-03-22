@@ -1,6 +1,9 @@
 import { useRef } from 'react'
 import type { SpinePlaybackTransport } from '../SpinePlayer/SpinePlayer'
 import {
+  SPINE_ANIMATION_SPEED_MAX,
+  SPINE_ANIMATION_SPEED_MIN,
+  SPINE_ANIMATION_SPEED_STEP,
   SPINE_VIEW_SCALE_MAX,
   SPINE_VIEW_SCALE_MIN,
 } from '../spineViewScale'
@@ -9,6 +12,10 @@ import styles from './SettingsPanel.module.scss'
 const SCALE_MIN = SPINE_VIEW_SCALE_MIN
 const SCALE_MAX = SPINE_VIEW_SCALE_MAX
 const SCALE_STEP = 0.05
+
+const SPEED_MIN = SPINE_ANIMATION_SPEED_MIN
+const SPEED_MAX = SPINE_ANIMATION_SPEED_MAX
+const SPEED_STEP = SPINE_ANIMATION_SPEED_STEP
 
 export interface SettingsPanelProps {
   animations: string[]
@@ -22,6 +29,8 @@ export interface SettingsPanelProps {
   onStop: () => void
   canvasScale: number
   onCanvasScaleChange: (scale: number) => void
+  animationSpeed: number
+  onAnimationSpeedChange: (speed: number) => void
   onResetLayout: () => void
   onLoadSpineFiles?: (files: File[]) => void
   spineLoadError?: string | null
@@ -41,6 +50,8 @@ export function SettingsPanel({
   onStop,
   canvasScale,
   onCanvasScaleChange,
+  animationSpeed,
+  onAnimationSpeedChange,
   onResetLayout,
   onLoadSpineFiles,
   spineLoadError,
@@ -191,6 +202,28 @@ export function SettingsPanel({
           step={SCALE_STEP}
           value={canvasScale}
           onChange={(e) => onCanvasScaleChange(Number(e.target.value))}
+        />
+      </div>
+      <div className={styles.field}>
+        <div className={styles.scaleHeader}>
+          <label className={styles.label} htmlFor="animation-speed-slider">
+            Animation speed
+          </label>
+          <div className={styles.scaleHeaderActions}>
+            <span className={styles.scaleValue} aria-live="polite">
+              {animationSpeed.toFixed(2)}×
+            </span>
+          </div>
+        </div>
+        <input
+          id="animation-speed-slider"
+          className={styles.slider}
+          type="range"
+          min={SPEED_MIN}
+          max={SPEED_MAX}
+          step={SPEED_STEP}
+          value={animationSpeed}
+          onChange={(e) => onAnimationSpeedChange(Number(e.target.value))}
         />
       </div>
     </aside>

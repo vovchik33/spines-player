@@ -16,6 +16,7 @@ import {
 import styles from './App.module.scss'
 
 const INITIAL_CANVAS_SCALE = 1
+const INITIAL_ANIMATION_SPEED = 1
 
 type CustomSpinePack = {
   displayName: string
@@ -74,6 +75,7 @@ export default function App() {
   }, [bumpPlayback])
 
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
+  const [animationSpeed, setAnimationSpeed] = useState(INITIAL_ANIMATION_SPEED)
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
   const [spineLoadError, setSpineLoadError] = useState<string | null>(null)
@@ -148,6 +150,7 @@ export default function App() {
       setAnimations([])
       setPlaybackTransport('playing')
       setAnimationLoop(true)
+      setAnimationSpeed(INITIAL_ANIMATION_SPEED)
       setPlaybackNonce((n) => n + 1)
       setCustomSpine((prev) => {
         if (prev) {
@@ -166,6 +169,7 @@ export default function App() {
   const resetLayout = () => {
     console.log('[App] Reset layout (spine scale + pan + renderer remeasure)')
     setCanvasScale(INITIAL_CANVAS_SCALE)
+    setAnimationSpeed(INITIAL_ANIMATION_SPEED)
     setLayoutResetToken((n) => n + 1)
   }
 
@@ -206,6 +210,8 @@ export default function App() {
           onStop={handleStop}
           canvasScale={canvasScale}
           onCanvasScaleChange={setCanvasScale}
+          animationSpeed={animationSpeed}
+          onAnimationSpeedChange={setAnimationSpeed}
           onResetLayout={resetLayout}
           onLoadSpineFiles={handleLoadSpineFiles}
           spineLoadError={spineLoadError}
@@ -221,6 +227,7 @@ export default function App() {
               playbackTransport={playbackTransport}
               animationLoop={animationLoop}
               playbackNonce={playbackNonce}
+              animationSpeed={animationSpeed}
               spineScale={canvasScale}
               layoutResetToken={layoutResetToken}
               onSpineScaleDelta={applySpineScaleDelta}

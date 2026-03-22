@@ -185,6 +185,8 @@ interface Props {
   animationLoop: boolean;
   /** Bump to force restarting the current clip (Play restart, Stop, load). Not used for pause → resume. */
   playbackNonce: number;
+  /** Multiplier for {@link AnimationState#timeScale} while transport is playing (1 = normal). */
+  animationSpeed: number;
   /** Uniform scale of the Spine inside the canvas (does not resize the canvas element). */
   spineScale: number;
   /** Increment to remeasure renderer, reset pan, and reapply {@link spineScale}. */
@@ -221,6 +223,7 @@ function applySpinePlayback(
   transport: SpinePlaybackTransport,
   animationLoop: boolean,
   playbackNonce: number,
+  animationSpeed: number,
   lastNonceRef: { current: number | null },
 ) {
   if (transport === 'stopped') {
@@ -258,7 +261,7 @@ function applySpinePlayback(
   }
 
   lastNonceRef.current = playbackNonce;
-  spine.state.timeScale = transport === 'playing' ? 1 : 0;
+  spine.state.timeScale = transport === 'playing' ? animationSpeed : 0;
 }
 
 export const Pixi8SpinePlayer: React.FC<Props> = ({
@@ -269,6 +272,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   playbackTransport,
   animationLoop,
   playbackNonce,
+  animationSpeed,
   spineScale,
   layoutResetToken = 0,
   onAnimationsLoaded,
@@ -423,6 +427,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
         playbackTransport,
         animationLoop,
         playbackNonce,
+        animationSpeed,
         lastPlaybackNonceRef,
       );
 
@@ -604,9 +609,10 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       playbackTransport,
       animationLoop,
       playbackNonce,
+      animationSpeed,
       lastPlaybackNonceRef,
     );
-  }, [animation, playbackTransport, animationLoop, playbackNonce]);
+  }, [animation, playbackTransport, animationLoop, playbackNonce, animationSpeed]);
 
   useEffect(() => {
     const host = containerRef.current;
