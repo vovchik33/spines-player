@@ -141,6 +141,32 @@
   gap: 6px;
 }
 
+.loopCheckboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--settings-fg);
+  cursor: pointer;
+  user-select: none;
+
+  &:has(.loopCheckbox:disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.loopCheckbox {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: inherit;
+  accent-color: var(--settings-focus);
+}
+
 .playbackButton {
   flex: 1;
   min-width: 0;

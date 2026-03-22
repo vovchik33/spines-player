@@ -179,8 +179,11 @@ interface Props {
   /** When loading from blobs, map atlas page name (first line of .atlas) → texture object URL. */
   atlasImageMap?: Record<string, string>;
   animation: string;
-  /** How the selected clip should play; bump {@link playbackNonce} to restart Play / Play Loop. */
-  playbackMode: SpinePlaybackMode;
+  /** playing = advance animation; paused = frozen frame; stopped = setup pose, track cleared. */
+  playbackTransport: SpinePlaybackTransport;
+  /** When playing or paused, whether track 0 loops. */
+  animationLoop: boolean;
+  /** Bump to force restarting the current clip (Play restart, Stop, load). Not used for pause → resume. */
   playbackNonce: number;
   /** Uniform scale of the Spine inside the canvas (does not resize the canvas element). */
   spineScale: number;
@@ -206,32 +209,56 @@ function pickAnimationToPlay(spine: Spine, preferred: string): string | null {
   return names[0] ?? null;
 }
 
-export type SpinePlaybackMode = 'once' | 'loop' | 'stop';
+export type SpinePlaybackTransport = 'playing' | 'paused' | 'stopped';
 
-/** Apply dropdown clip + playback mode (used on init and when props change). */
-function syncSpinePlayback(
+/**
+ * Apply clip + transport. Uses {@link playbackNonce} so Play-while-playing restarts without
+ * breaking pause → resume (same nonce).
+ */
+function applySpinePlayback(
   spine: Spine,
   preferred: string,
-  mode: SpinePlaybackMode,
+  transport: SpinePlaybackTransport,
+  animationLoop: boolean,
+  playbackNonce: number,
+  lastNonceRef: { current: number | null },
 ) {
-  if (mode === 'stop') {
+  if (transport === 'stopped') {
+    spine.state.timeScale = 1;
     spine.state.clearTrack(0);
     spine.skeleton.setToSetupPose();
+    lastNonceRef.current = playbackNonce;
     console.log('[SpinePlayer] playback stop (clear track 0, setup pose)');
     return;
   }
+
   const name = pickAnimationToPlay(spine, preferred);
   if (!name) {
     console.warn('[SpinePlayer] setAnimation skipped: no clips on skeleton', { preferred });
     return;
   }
-  const loop = mode === 'loop';
-  console.log('[SpinePlayer] setAnimation track 0', {
-    preferred: preferred || '(none)',
-    resolved: name,
-    loop,
-  });
-  spine.state.setAnimation(0, name, loop);
+
+  const track = spine.state.tracks[0];
+  const mismatched = !track?.animation || track.animation.name !== name;
+  const nonceRestart =
+    lastNonceRef.current !== null && lastNonceRef.current !== playbackNonce;
+  const shouldSetAnim = mismatched || nonceRestart;
+
+  if (shouldSetAnim) {
+    console.log('[SpinePlayer] setAnimation track 0', {
+      preferred: preferred || '(none)',
+      resolved: name,
+      loop: animationLoop,
+      transport,
+    });
+    spine.state.setAnimation(0, name, animationLoop);
+  } else {
+    const t = spine.state.tracks[0];
+    if (t) t.loop = animationLoop;
+  }
+
+  lastNonceRef.current = playbackNonce;
+  spine.state.timeScale = transport === 'playing' ? 1 : 0;
 }
 
 export const Pixi8SpinePlayer: React.FC<Props> = ({
@@ -239,7 +266,8 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   atlasUrl,
   atlasImageMap,
   animation,
-  playbackMode,
+  playbackTransport,
+  animationLoop,
   playbackNonce,
   spineScale,
   layoutResetToken = 0,
@@ -257,6 +285,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   const applyViewRef = useRef<() => void>(() => {});
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
   const onSpineScaleDeltaRef = useRef(onSpineScaleDelta);
+  const lastPlaybackNonceRef = useRef<number | null>(null);
 
   const applySpineViewTransform = useCallback(() => {
     const app = appRef.current;
@@ -388,7 +417,14 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
 
       spineRef.current = spine;
       spine.autoUpdate = true;
-      syncSpinePlayback(spine, animation, playbackMode);
+      applySpinePlayback(
+        spine,
+        animation,
+        playbackTransport,
+        animationLoop,
+        playbackNonce,
+        lastPlaybackNonceRef,
+      );
 
       const names = spine.skeleton.data.animations.map((a) => a.name);
       console.log('[SpinePlayer] notify onAnimationsLoaded', names);
@@ -518,7 +554,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
         });
       }
     };
-    // playback: applied in dedicated effect; init uses closure playbackMode (first paint)
+    // playback: applied in dedicated effect; init uses closure transport (first paint)
     // skelAlias/atlasAlias: stable per mount; listed only for logging
   }, [skeletonUrl, atlasUrl, atlasImageMap]); // eslint-disable-line react-hooks/exhaustive-deps -- see above
 
@@ -557,13 +593,20 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     if (!spine) {
       console.log('[SpinePlayer] playback/animation but spine not ready yet', {
         animation,
-        playbackMode,
+        playbackTransport,
         playbackNonce,
       });
       return;
     }
-    syncSpinePlayback(spine, animation, playbackMode);
-  }, [animation, playbackMode, playbackNonce]);
+    applySpinePlayback(
+      spine,
+      animation,
+      playbackTransport,
+      animationLoop,
+      playbackNonce,
+      lastPlaybackNonceRef,
+    );
+  }, [animation, playbackTransport, animationLoop, playbackNonce]);
 
   useEffect(() => {
     const host = containerRef.current;

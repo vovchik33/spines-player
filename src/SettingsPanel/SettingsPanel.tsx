@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import type { SpinePlaybackMode } from '../SpinePlayer/SpinePlayer'
+import type { SpinePlaybackTransport } from '../SpinePlayer/SpinePlayer'
 import {
   SPINE_VIEW_SCALE_MAX,
   SPINE_VIEW_SCALE_MIN,
@@ -14,10 +14,12 @@ export interface SettingsPanelProps {
   animations: string[]
   selectedAnimation: string
   onAnimationChange: (name: string) => void
-  playbackMode: SpinePlaybackMode
-  onPlayOnce: () => void
-  onPlayLoop: () => void
-  onPlaybackStop: () => void
+  playbackTransport: SpinePlaybackTransport
+  animationLoop: boolean
+  onAnimationLoopChange: (loop: boolean) => void
+  onPlay: () => void
+  onPause: () => void
+  onStop: () => void
   canvasScale: number
   onCanvasScaleChange: (scale: number) => void
   onResetLayout: () => void
@@ -31,10 +33,12 @@ export function SettingsPanel({
   animations,
   selectedAnimation,
   onAnimationChange,
-  playbackMode,
-  onPlayOnce,
-  onPlayLoop,
-  onPlaybackStop,
+  playbackTransport,
+  animationLoop,
+  onAnimationLoopChange,
+  onPlay,
+  onPause,
+  onStop,
   canvasScale,
   onCanvasScaleChange,
   onResetLayout,
@@ -43,6 +47,7 @@ export function SettingsPanel({
   loadedSpineName,
 }: SettingsPanelProps) {
   const spineFileInputRef = useRef<HTMLInputElement>(null)
+  const canPlayback = animations.length > 0 && Boolean(selectedAnimation)
 
   return (
     <aside className={styles.panel} aria-label="Spine configuration">
@@ -123,31 +128,41 @@ export function SettingsPanel({
           <button
             type="button"
             className={styles.playbackButton}
-            disabled={animations.length === 0 || !selectedAnimation}
-            onClick={onPlayOnce}
-            aria-pressed={playbackMode === 'once'}
+            disabled={!canPlayback}
+            onClick={onPlay}
+            aria-pressed={playbackTransport === 'playing'}
           >
             Play
           </button>
           <button
             type="button"
             className={styles.playbackButton}
-            disabled={animations.length === 0 || !selectedAnimation}
-            onClick={onPlayLoop}
-            aria-pressed={playbackMode === 'loop'}
+            disabled={!canPlayback || playbackTransport === 'stopped'}
+            onClick={onPause}
+            aria-pressed={playbackTransport === 'paused'}
           >
-            Play loop
+            Pause
           </button>
           <button
             type="button"
             className={styles.playbackButton}
             disabled={animations.length === 0}
-            onClick={onPlaybackStop}
-            aria-pressed={playbackMode === 'stop'}
+            onClick={onStop}
+            aria-pressed={playbackTransport === 'stopped'}
           >
             Stop
           </button>
         </div>
+        <label className={styles.loopCheckboxRow}>
+          <input
+            type="checkbox"
+            className={styles.loopCheckbox}
+            checked={animationLoop}
+            onChange={(e) => onAnimationLoopChange(e.target.checked)}
+            disabled={!canPlayback}
+          />
+          <span>Loop animation</span>
+        </label>
       </div>
       <div className={styles.field}>
         <div className={styles.scaleHeader}>

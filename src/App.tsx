@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Pixi8SpinePlayer,
-  type SpinePlaybackMode,
+  type SpinePlaybackTransport,
 } from './SpinePlayer/SpinePlayer'
 import { SettingsPanel } from './SettingsPanel/SettingsPanel'
 import {
@@ -36,27 +36,43 @@ export default function App() {
 
   const [animation, setAnimation] = useState('1_Idle')
   const [animations, setAnimations] = useState<string[]>([])
-  const [playbackMode, setPlaybackMode] = useState<SpinePlaybackMode>('loop')
+  const [playbackTransport, setPlaybackTransport] =
+    useState<SpinePlaybackTransport>('playing')
+  const [animationLoop, setAnimationLoop] = useState(true)
   const [playbackNonce, setPlaybackNonce] = useState(0)
+
+  const playbackTransportRef = useRef(playbackTransport)
+  useEffect(() => {
+    playbackTransportRef.current = playbackTransport
+  }, [playbackTransport])
 
   const bumpPlayback = useCallback(() => {
     setPlaybackNonce((n) => n + 1)
   }, [])
 
-  const handlePlayOnce = useCallback(() => {
-    setPlaybackMode('once')
+  const handlePlay = useCallback(() => {
+    const prev = playbackTransportRef.current
+    setPlaybackTransport('playing')
+    if (prev !== 'paused') {
+      bumpPlayback()
+    }
+  }, [bumpPlayback])
+
+  /** Pause when playing; press again to resume (same as Space). */
+  const handlePause = useCallback(() => {
+    const prev = playbackTransportRef.current
+    if (prev === 'paused') {
+      setPlaybackTransport('playing')
+    } else {
+      setPlaybackTransport('paused')
+    }
+  }, [])
+
+  const handleStop = useCallback(() => {
+    setPlaybackTransport('stopped')
     bumpPlayback()
   }, [bumpPlayback])
 
-  const handlePlayLoop = useCallback(() => {
-    setPlaybackMode('loop')
-    bumpPlayback()
-  }, [bumpPlayback])
-
-  const handlePlaybackStop = useCallback(() => {
-    setPlaybackMode('stop')
-    bumpPlayback()
-  }, [bumpPlayback])
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
@@ -76,6 +92,35 @@ export default function App() {
       customSpineRef.current?.revoke()
     }
   }, [])
+
+  useEffect(() => {
+    const isEditableKeyTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false
+      return Boolean(
+        target.closest(
+          'button, a[href], input:not([type="button"]):not([type="submit"]):not([type="reset"]), textarea, select, [contenteditable="true"]',
+        ),
+      )
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || e.repeat) return
+      if (isEditableKeyTarget(e.target)) return
+      e.preventDefault()
+      const prev = playbackTransportRef.current
+      if (prev === 'playing') {
+        setPlaybackTransport('paused')
+        return
+      }
+      setPlaybackTransport('playing')
+      if (prev === 'stopped') {
+        bumpPlayback()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [bumpPlayback])
 
   const handleLoadSpineFiles = useCallback(async (files: File[]) => {
     console.log('[App] Load Spine: picked files', files.length)
@@ -101,7 +146,8 @@ export default function App() {
       }
       console.log('[App] Load Spine: applying pack', { displayName, atlasPageName })
       setAnimations([])
-      setPlaybackMode('loop')
+      setPlaybackTransport('playing')
+      setAnimationLoop(true)
       setPlaybackNonce((n) => n + 1)
       setCustomSpine((prev) => {
         if (prev) {
@@ -152,10 +198,12 @@ export default function App() {
           animations={animations}
           selectedAnimation={selectedAnimation}
           onAnimationChange={setAnimation}
-          playbackMode={playbackMode}
-          onPlayOnce={handlePlayOnce}
-          onPlayLoop={handlePlayLoop}
-          onPlaybackStop={handlePlaybackStop}
+          playbackTransport={playbackTransport}
+          animationLoop={animationLoop}
+          onAnimationLoopChange={setAnimationLoop}
+          onPlay={handlePlay}
+          onPause={handlePause}
+          onStop={handleStop}
           canvasScale={canvasScale}
           onCanvasScaleChange={setCanvasScale}
           onResetLayout={resetLayout}
@@ -170,7 +218,8 @@ export default function App() {
               atlasUrl={atlasUrl}
               atlasImageMap={atlasImageMap}
               animation={selectedAnimation}
-              playbackMode={playbackMode}
+              playbackTransport={playbackTransport}
+              animationLoop={animationLoop}
               playbackNonce={playbackNonce}
               spineScale={canvasScale}
               layoutResetToken={layoutResetToken}
