@@ -299,7 +299,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
         blobAtlas: !!(atlasImageMap && Object.keys(atlasImageMap).length),
       });
 
-      // Wait for flex layout so clientWidth/Height are non-zero, then freeze size (no resizeTo).
+      // Wait for flex layout so clientWidth/Height are non-zero before first init.
       await new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       });
@@ -311,7 +311,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       const height = Math.max(1, Math.floor(layoutEl.clientHeight));
       console.log('[SpinePlayer] layout measure', { width, height });
 
-      // 1. New Pixi 8 App Initialization — fixed resolution; browser resize does not resize the canvas.
+      // 1. Pixi Application — initial size from layout; ResizeObserver keeps canvas in sync later.
       const app = new Application();
       await app.init({
         width,
@@ -537,6 +537,39 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     }
     syncSpinePlayback(spine, animation, playbackMode);
   }, [animation, playbackMode, playbackNonce]);
+
+  useEffect(() => {
+    const host = containerRef.current;
+    if (!host) return;
+    const layoutEl = getLayoutElement(host);
+
+    let raf = 0;
+    const resizeToLayout = () => {
+      const app = appRef.current;
+      if (!app) return;
+      const w = Math.max(1, Math.floor(layoutEl.clientWidth));
+      const h = Math.max(1, Math.floor(layoutEl.clientHeight));
+      app.renderer.resize(w, h);
+      applyViewRef.current();
+    };
+
+    const scheduleResize = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        resizeToLayout();
+      });
+    };
+
+    const ro = new ResizeObserver(scheduleResize);
+    ro.observe(layoutEl);
+    scheduleResize();
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, []);
 
   return <div ref={containerRef} className={styles.host} />;
 };
