@@ -1,9 +1,13 @@
 import { useRef } from 'react'
 import type { SpinePlaybackMode } from '../SpinePlayer/SpinePlayer'
+import {
+  SPINE_VIEW_SCALE_MAX,
+  SPINE_VIEW_SCALE_MIN,
+} from '../spineViewScale'
 import styles from './SettingsPanel.module.scss'
 
-const SCALE_MIN = 0.1
-const SCALE_MAX = 3
+const SCALE_MIN = SPINE_VIEW_SCALE_MIN
+const SCALE_MAX = SPINE_VIEW_SCALE_MAX
 const SCALE_STEP = 0.05
 
 export interface SettingsPanelProps {

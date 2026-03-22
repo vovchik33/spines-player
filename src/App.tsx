@@ -9,6 +9,10 @@ import {
   createSpineObjectUrls,
   getAtlasPageName,
 } from './spine/loadSpineFiles'
+import {
+  SPINE_VIEW_SCALE_MAX,
+  SPINE_VIEW_SCALE_MIN,
+} from './spineViewScale'
 import styles from './App.module.scss'
 
 const INITIAL_CANVAS_SCALE = 1
@@ -119,6 +123,15 @@ export default function App() {
     setLayoutResetToken((n) => n + 1)
   }
 
+  const applySpineScaleDelta = useCallback((delta: number) => {
+    setCanvasScale((s) =>
+      Math.min(
+        SPINE_VIEW_SCALE_MAX,
+        Math.max(SPINE_VIEW_SCALE_MIN, s + delta),
+      ),
+    )
+  }, [])
+
   // While the list is empty (e.g. after Load Spine), avoid passing a stale clip name to the player.
   const selectedAnimation =
     animations.length === 0
@@ -161,6 +174,7 @@ export default function App() {
               playbackNonce={playbackNonce}
               spineScale={canvasScale}
               layoutResetToken={layoutResetToken}
+              onSpineScaleDelta={applySpineScaleDelta}
               onAnimationsLoaded={(names) => {
                 console.log('[App] onAnimationsLoaded', { count: names.length, names })
                 setAnimations(names)

@@ -188,6 +188,8 @@ interface Props {
   layoutResetToken?: number;
   /** Fired once the skeleton is built; names come from {@link SkeletonData#animations}. */
   onAnimationsLoaded?: (animationNames: string[]) => void;
+  /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
+  onSpineScaleDelta?: (delta: number) => void;
 }
 
 function getLayoutElement(host: HTMLElement): HTMLElement {
@@ -242,6 +244,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   spineScale,
   layoutResetToken = 0,
   onAnimationsLoaded,
+  onSpineScaleDelta,
 }) => {
   /** Disambiguate multiple player instances; aliases also get a per-load seq (see loadSeqRef). */
   const loadId = useId().replace(/:/g, '');
@@ -253,6 +256,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   const panRef = useRef({ x: 0, y: 0 });
   const applyViewRef = useRef<() => void>(() => {});
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
+  const onSpineScaleDeltaRef = useRef(onSpineScaleDelta);
 
   const applySpineViewTransform = useCallback(() => {
     const app = appRef.current;
@@ -278,6 +282,10 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   }, [onAnimationsLoaded]);
 
   useEffect(() => {
+    onSpineScaleDeltaRef.current = onSpineScaleDelta;
+  }, [onSpineScaleDelta]);
+
+  useEffect(() => {
     let cancelled = false;
     loadSeqRef.current += 1;
     const seq = loadSeqRef.current;
@@ -285,6 +293,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     const atlasAlias = `spineAtlas_${loadId}_${seq}`;
     let registeredPixiAssetAliases = false;
     let detachCanvasPointers: (() => void) | undefined;
+    let detachWheel: (() => void) | undefined;
 
     const initPixi = async () => {
       if (!containerRef.current) return;
@@ -446,12 +455,29 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       canvas.addEventListener('pointercancel', endDrag);
       canvas.addEventListener('lostpointercapture', onLostPointerCapture);
 
+      const WHEEL_STEP = 0.06;
+      const onWheel = (e: WheelEvent) => {
+        const fn = onSpineScaleDeltaRef.current;
+        if (!fn) return;
+        e.preventDefault();
+        // deltaY > 0: scroll down → zoom out; deltaY < 0: zoom in
+        const direction = e.deltaY < 0 ? 1 : -1;
+        const magnitude = Math.min(3, 1 + Math.abs(e.deltaY) / 100);
+        fn(direction * WHEEL_STEP * magnitude);
+      };
+
+      canvas.addEventListener('wheel', onWheel, { passive: false });
+
       detachCanvasPointers = () => {
         canvas.removeEventListener('pointerdown', onPointerDown);
         canvas.removeEventListener('pointermove', onPointerMove);
         canvas.removeEventListener('pointerup', endDrag);
         canvas.removeEventListener('pointercancel', endDrag);
         canvas.removeEventListener('lostpointercapture', onLostPointerCapture);
+      };
+
+      detachWheel = () => {
+        canvas.removeEventListener('wheel', onWheel);
       };
 
       applyViewRef.current();
@@ -472,6 +498,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       console.log('[SpinePlayer] cleanup: destroy Pixi app', { skelAlias, atlasAlias });
       cancelled = true;
       detachCanvasPointers?.();
+      detachWheel?.();
       spineRef.current = null;
       if (appRef.current) {
         appRef.current.destroy(true, { children: true, texture: true });
