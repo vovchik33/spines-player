@@ -9,7 +9,7 @@ interface Props {
   animation: string;
   /** Visual scale of the Pixi view (CSS transform). */
   canvasScale?: number;
-  /** Increment to clear pan to (0,0) without changing scale (e.g. reset control). */
+  /** Increment to clear pan, reset scale (in parent), and remeasure canvas / renderer size. */
   layoutResetToken?: number;
   /** Fired once the skeleton is built; names come from {@link SkeletonData#animations}. */
   onAnimationsLoaded?: (animationNames: string[]) => void;
@@ -45,8 +45,6 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     startPanY: number;
   } | null>(null);
 
-  const canPan = Math.abs(canvasScale - 1) > 0.001;
-
   useEffect(() => {
     setPan({ x: 0, y: 0 });
     dragRef.current = null;
@@ -54,7 +52,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   }, [canvasScale, layoutResetToken]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!canPan || e.button !== 0) return;
+    if (e.button !== 0) return;
     e.preventDefault();
     dragRef.current = {
       pointerId: e.pointerId,
@@ -94,12 +92,24 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     const initPixi = async () => {
       if (!containerRef.current) return;
 
-      // 1. New Pixi 8 App Initialization
+      // Wait for flex layout so clientWidth/Height are non-zero, then freeze size (no resizeTo).
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      if (cancelled || !containerRef.current) return;
+
+      const host = containerRef.current;
+      const layoutEl = host.parentElement ?? host;
+      const width = Math.max(1, Math.floor(layoutEl.clientWidth));
+      const height = Math.max(1, Math.floor(layoutEl.clientHeight));
+
+      // 1. New Pixi 8 App Initialization — fixed resolution; browser resize does not resize the canvas.
       const app = new Application();
-      await app.init({ 
-        resizeTo: containerRef.current, 
+      await app.init({
+        width,
+        height,
         backgroundAlpha: 0,
-        preference: 'webgpu' // Pixi 8 will try WebGPU first, then WebGL
+        preference: 'webgpu', // Pixi 8 will try WebGPU first, then WebGL
       });
       
       if (cancelled) {
@@ -152,6 +162,30 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   }, [skeletonUrl, atlasUrl]);
 
   useEffect(() => {
+    if (layoutResetToken === 0) return;
+
+    let frame = 0;
+    const applySizeFromLayout = () => {
+      const app = appRef.current;
+      const spine = spineRef.current;
+      const host = containerRef.current;
+      if (!app || !spine || !host) return;
+
+      const layoutEl = host.parentElement ?? host;
+      const width = Math.max(1, Math.floor(layoutEl.clientWidth));
+      const height = Math.max(1, Math.floor(layoutEl.clientHeight));
+
+      app.renderer.resize(width, height);
+      spine.position.set(width / 2, height / 2);
+    };
+
+    frame = requestAnimationFrame(() => {
+      requestAnimationFrame(applySizeFromLayout);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [layoutResetToken]);
+
+  useEffect(() => {
     const spine = spineRef.current;
     if (!spine) return;
     spine.state.setAnimation(0, animation, true);
@@ -159,7 +193,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
 
   return (
     <div
-      className={`${styles.root} ${canPan ? styles.pannable : ''} ${dragging ? styles.dragging : ''}`}
+      className={`${styles.root} ${styles.pannable} ${dragging ? styles.dragging : ''}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
