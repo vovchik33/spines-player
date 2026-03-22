@@ -10,6 +10,9 @@ import {
   getAtlasPageName,
 } from './spine/loadSpineFiles'
 import {
+  SPINE_ANIMATION_SPEED_MAX,
+  SPINE_ANIMATION_SPEED_MIN,
+  SPINE_ANIMATION_SPEED_STEP,
   SPINE_VIEW_SCALE_MAX,
   SPINE_VIEW_SCALE_MIN,
 } from './spineViewScale'
@@ -43,9 +46,17 @@ export default function App() {
   const [playbackNonce, setPlaybackNonce] = useState(0)
 
   const playbackTransportRef = useRef(playbackTransport)
+  const animationsRef = useRef(animations)
+  const animationRef = useRef(animation)
+
   useEffect(() => {
     playbackTransportRef.current = playbackTransport
   }, [playbackTransport])
+
+  useEffect(() => {
+    animationsRef.current = animations
+    animationRef.current = animation
+  }, [animations, animation])
 
   const bumpPlayback = useCallback(() => {
     setPlaybackNonce((n) => n + 1)
@@ -106,18 +117,56 @@ export default function App() {
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== 'KeyP' || e.repeat) return
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if (isEditableKeyTarget(e.target)) return
-      e.preventDefault()
-      const prev = playbackTransportRef.current
-      if (prev === 'playing') {
-        setPlaybackTransport('paused')
+
+      if (e.code === 'KeyP') {
+        if (e.repeat) return
+        e.preventDefault()
+        const prev = playbackTransportRef.current
+        if (prev === 'playing') {
+          setPlaybackTransport('paused')
+          return
+        }
+        setPlaybackTransport('playing')
+        if (prev === 'stopped') {
+          bumpPlayback()
+        }
         return
       }
-      setPlaybackTransport('playing')
-      if (prev === 'stopped') {
-        bumpPlayback()
+
+      // Physical comma / period keys (`code` is layout-independent).
+      if (e.code === 'Comma') {
+        e.preventDefault()
+        setAnimationSpeed((s) =>
+          Math.max(
+            SPINE_ANIMATION_SPEED_MIN,
+            s - SPINE_ANIMATION_SPEED_STEP,
+          ),
+        )
+        return
+      }
+      if (e.code === 'Period') {
+        e.preventDefault()
+        setAnimationSpeed((s) =>
+          Math.min(
+            SPINE_ANIMATION_SPEED_MAX,
+            s + SPINE_ANIMATION_SPEED_STEP,
+          ),
+        )
+        return
+      }
+
+      if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+        const names = animationsRef.current
+        if (names.length === 0) return
+        e.preventDefault()
+        const raw = animationRef.current
+        const current = names.includes(raw) ? raw : names[0]
+        const idx = names.indexOf(current)
+        const delta = e.code === 'ArrowDown' ? 1 : -1
+        const nextIdx = (idx + delta + names.length) % names.length
+        setAnimation(names[nextIdx])
       }
     }
 
