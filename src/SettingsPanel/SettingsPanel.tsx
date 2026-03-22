@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import type { SpinePlaybackMode } from '../SpinePlayer/SpinePlayer'
 import styles from './SettingsPanel.module.scss'
 
 const SCALE_MIN = 0.25
@@ -9,6 +10,10 @@ export interface SettingsPanelProps {
   animations: string[]
   selectedAnimation: string
   onAnimationChange: (name: string) => void
+  playbackMode: SpinePlaybackMode
+  onPlayOnce: () => void
+  onPlayLoop: () => void
+  onPlaybackStop: () => void
   canvasScale: number
   onCanvasScaleChange: (scale: number) => void
   onResetLayout: () => void
@@ -22,6 +27,10 @@ export function SettingsPanel({
   animations,
   selectedAnimation,
   onAnimationChange,
+  playbackMode,
+  onPlayOnce,
+  onPlayLoop,
+  onPlaybackStop,
   canvasScale,
   onCanvasScaleChange,
   onResetLayout,
@@ -80,26 +89,61 @@ export function SettingsPanel({
           </p>
         ) : null}
       </div>
-      <div className={styles.animationRow}>
-        <label className={styles.label} htmlFor="animation-select">
-          Animation
-        </label>
-        {animations.length === 0 ? (
-          <p className={styles.mutedInline}>Loading animations…</p>
-        ) : (
-          <select
-            id="animation-select"
-            className={`${styles.select} ${styles.selectInline}`}
-            value={selectedAnimation}
-            onChange={(e) => onAnimationChange(e.target.value)}
+      <div className={styles.animationBlock}>
+        <div className={styles.animationRow}>
+          <label className={styles.label} htmlFor="animation-select">
+            Animation
+          </label>
+          {animations.length === 0 ? (
+            <p className={styles.mutedInline}>Loading animations…</p>
+          ) : (
+            <select
+              id="animation-select"
+              className={`${styles.select} ${styles.selectInline}`}
+              value={selectedAnimation}
+              onChange={(e) => onAnimationChange(e.target.value)}
+            >
+              {animations.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div
+          className={styles.playbackRow}
+          role="group"
+          aria-label="Animation playback"
+        >
+          <button
+            type="button"
+            className={styles.playbackButton}
+            disabled={animations.length === 0 || !selectedAnimation}
+            onClick={onPlayOnce}
+            aria-pressed={playbackMode === 'once'}
           >
-            {animations.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        )}
+            Play
+          </button>
+          <button
+            type="button"
+            className={styles.playbackButton}
+            disabled={animations.length === 0 || !selectedAnimation}
+            onClick={onPlayLoop}
+            aria-pressed={playbackMode === 'loop'}
+          >
+            Play loop
+          </button>
+          <button
+            type="button"
+            className={styles.playbackButton}
+            disabled={animations.length === 0}
+            onClick={onPlaybackStop}
+            aria-pressed={playbackMode === 'stop'}
+          >
+            Stop
+          </button>
+        </div>
       </div>
       <div className={styles.field}>
         <div className={styles.scaleHeader}>

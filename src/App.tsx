@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DraggableArea } from './DraggableArea/DraggableArea'
-import { Pixi8SpinePlayer } from './SpinePlayer/SpinePlayer'
+import {
+  Pixi8SpinePlayer,
+  type SpinePlaybackMode,
+} from './SpinePlayer/SpinePlayer'
 import { SettingsPanel } from './SettingsPanel/SettingsPanel'
 import {
   classifySpineFiles,
@@ -30,6 +33,27 @@ export default function App() {
 
   const [animation, setAnimation] = useState('1_Idle')
   const [animations, setAnimations] = useState<string[]>([])
+  const [playbackMode, setPlaybackMode] = useState<SpinePlaybackMode>('loop')
+  const [playbackNonce, setPlaybackNonce] = useState(0)
+
+  const bumpPlayback = useCallback(() => {
+    setPlaybackNonce((n) => n + 1)
+  }, [])
+
+  const handlePlayOnce = useCallback(() => {
+    setPlaybackMode('once')
+    bumpPlayback()
+  }, [bumpPlayback])
+
+  const handlePlayLoop = useCallback(() => {
+    setPlaybackMode('loop')
+    bumpPlayback()
+  }, [bumpPlayback])
+
+  const handlePlaybackStop = useCallback(() => {
+    setPlaybackMode('stop')
+    bumpPlayback()
+  }, [bumpPlayback])
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
@@ -74,6 +98,8 @@ export default function App() {
       }
       console.log('[App] Load Spine: applying pack', { displayName, atlasPageName })
       setAnimations([])
+      setPlaybackMode('loop')
+      setPlaybackNonce((n) => n + 1)
       setCustomSpine((prev) => {
         if (prev) {
           console.log('[App] Load Spine: revoking previous custom pack')
@@ -114,6 +140,10 @@ export default function App() {
           animations={animations}
           selectedAnimation={selectedAnimation}
           onAnimationChange={setAnimation}
+          playbackMode={playbackMode}
+          onPlayOnce={handlePlayOnce}
+          onPlayLoop={handlePlayLoop}
+          onPlaybackStop={handlePlaybackStop}
           canvasScale={canvasScale}
           onCanvasScaleChange={setCanvasScale}
           onResetLayout={resetLayout}
@@ -128,6 +158,8 @@ export default function App() {
               atlasUrl={atlasUrl}
               atlasImageMap={atlasImageMap}
               animation={selectedAnimation}
+              playbackMode={playbackMode}
+              playbackNonce={playbackNonce}
               layoutResetToken={layoutResetToken}
               onAnimationsLoaded={(names) => {
                 console.log('[App] onAnimationsLoaded', { count: names.length, names })

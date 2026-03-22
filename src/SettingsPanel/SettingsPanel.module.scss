@@ -118,6 +118,12 @@
   gap: 6px;
 }
 
+.animationBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .animationRow {
   display: flex;
   align-items: center;
@@ -126,6 +132,47 @@
 
   .label {
     flex-shrink: 0;
+  }
+}
+
+.playbackRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.playbackButton {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--settings-border);
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &[aria-pressed='true'] {
+    background: #094771;
+    border-color: var(--settings-focus);
+    color: #e7e7e7;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 2px;
   }
 }
 
