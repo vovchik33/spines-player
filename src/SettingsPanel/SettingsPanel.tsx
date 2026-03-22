@@ -80,7 +80,7 @@ export function SettingsPanel({
 
   return (
     <aside className={styles.panel} aria-label="Spine configuration">
-      <h1 className={styles.title}>Settings</h1>
+      <h1 className={styles.title}>Animation Configuration</h1>
       <div className={styles.loadBlock}>
         <input
           ref={spineFileInputRef}
