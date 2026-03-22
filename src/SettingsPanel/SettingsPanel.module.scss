@@ -12,6 +12,18 @@
   --settings-secondary-hover: #4e4e4e;
 
   flex: 0 0 280px;
+  min-height: 0;
+  align-self: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   padding: 12px 16px 16px;
   font-family:
     -apple-system,

@@ -80,7 +80,6 @@ export function SettingsPanel({
 
   return (
     <aside className={styles.panel} aria-label="Spine configuration">
-      <h1 className={styles.title}>Animation Configuration</h1>
       <div className={styles.loadBlock}>
         <input
           ref={spineFileInputRef}
@@ -115,7 +114,7 @@ export function SettingsPanel({
             className={styles.loadButton}
             onClick={() => spineFileInputRef.current?.click()}
           >
-            Load Spine…
+            Choose…
           </button>
         </div>
         <p className={styles.loadHint}>
