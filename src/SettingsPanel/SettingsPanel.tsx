@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import React, { useRef } from 'react'
 import type { SpinePlaybackTransport } from '../SpinePlayer/SpinePlayer'
 import {
   SPINE_ANIMATION_SPEED_MAX,
@@ -16,6 +16,21 @@ const SCALE_STEP = 0.05
 const SPEED_MIN = SPINE_ANIMATION_SPEED_MIN
 const SPEED_MAX = SPINE_ANIMATION_SPEED_MAX
 const SPEED_STEP = SPINE_ANIMATION_SPEED_STEP
+
+/** Drop focus after pointer drag/click; Escape for keyboard exit (arrows keep focus while adjusting). */
+const rangeReleaseFocusProps = {
+  onPointerUp: (e: React.PointerEvent<HTMLInputElement>) => {
+    e.currentTarget.blur()
+  },
+  onPointerCancel: (e: React.PointerEvent<HTMLInputElement>) => {
+    e.currentTarget.blur()
+  },
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.currentTarget.blur()
+    }
+  },
+}
 
 export interface SettingsPanelProps {
   animations: string[]
@@ -207,6 +222,7 @@ export function SettingsPanel({
           step={SCALE_STEP}
           value={canvasScale}
           onChange={(e) => onCanvasScaleChange(Number(e.target.value))}
+          {...rangeReleaseFocusProps}
         />
       </div>
       <div className={styles.field}>
@@ -237,6 +253,7 @@ export function SettingsPanel({
           step={SPEED_STEP}
           value={animationSpeed}
           onChange={(e) => onAnimationSpeedChange(Number(e.target.value))}
+          {...rangeReleaseFocusProps}
         />
       </div>
     </aside>
