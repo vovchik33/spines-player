@@ -36,6 +36,7 @@ export const DraggableArea: React.FC<DraggableAreaProps> = ({
   }, [pan]);
 
   useEffect(() => {
+    console.log('[DraggableArea] reset pan/drag', { scale, layoutResetToken });
     dragRef.current = null;
     queueMicrotask(() => {
       setPan({ x: 0, y: 0 });

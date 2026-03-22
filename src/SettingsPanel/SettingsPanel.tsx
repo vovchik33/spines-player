@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import styles from './SettingsPanel.module.scss'
 
 const SCALE_MIN = 0.25
@@ -11,6 +12,10 @@ export interface SettingsPanelProps {
   canvasScale: number
   onCanvasScaleChange: (scale: number) => void
   onResetLayout: () => void
+  onLoadSpineFiles?: (files: File[]) => void
+  spineLoadError?: string | null
+  /** Shown left of the Load Spine control (bundled sample or skeleton file base name). */
+  loadedSpineName: string
 }
 
 export function SettingsPanel({
@@ -20,10 +25,61 @@ export function SettingsPanel({
   canvasScale,
   onCanvasScaleChange,
   onResetLayout,
+  onLoadSpineFiles,
+  spineLoadError,
+  loadedSpineName,
 }: SettingsPanelProps) {
+  const spineFileInputRef = useRef<HTMLInputElement>(null)
+
   return (
     <aside className={styles.panel} aria-label="Spine configuration">
       <h1 className={styles.title}>Settings</h1>
+      <div className={styles.loadBlock}>
+        <input
+          ref={spineFileInputRef}
+          className={styles.fileInput}
+          type="file"
+          accept=".json,.skel,.atlas,.png,.jpg,.jpeg,.webp"
+          multiple
+          aria-label="Spine files: skeleton, atlas, and texture"
+          onChange={(e) => {
+            // Snapshot before clearing: FileList is live; resetting value empties it.
+            const list = e.target.files ? Array.from(e.target.files) : []
+            e.target.value = ''
+            if (list.length && onLoadSpineFiles) {
+              console.log('[SettingsPanel] file input change', {
+                count: list.length,
+                names: list.map((f) => f.name),
+              })
+              onLoadSpineFiles(list)
+            }
+          }}
+        />
+        <div className={styles.loadRow}>
+          <span
+            className={styles.loadedSpineName}
+            title={loadedSpineName}
+            aria-label={`Current Spine: ${loadedSpineName}`}
+          >
+            {loadedSpineName}
+          </span>
+          <button
+            type="button"
+            className={styles.loadButton}
+            onClick={() => spineFileInputRef.current?.click()}
+          >
+            Load Spine…
+          </button>
+        </div>
+        <p className={styles.loadHint}>
+          Select 3 files: .json or .skel, .atlas, and image (.png / .jpg / .webp).
+        </p>
+        {spineLoadError ? (
+          <p className={styles.loadError} role="alert">
+            {spineLoadError}
+          </p>
+        ) : null}
+      </div>
       <div className={styles.animationRow}>
         <label className={styles.label} htmlFor="animation-select">
           Animation

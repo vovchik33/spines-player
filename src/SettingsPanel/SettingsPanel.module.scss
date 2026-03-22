@@ -43,6 +43,75 @@
   border-bottom: 1px solid var(--settings-border);
 }
 
+.loadBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loadRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.loadedSpineName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e7e7e7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loadButton {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--settings-border);
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 2px;
+  }
+}
+
+.loadHint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--settings-fg-dim);
+}
+
+.loadError {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #f48771;
+}
+
 .field {
   display: flex;
   flex-direction: column;
