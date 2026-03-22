@@ -15,6 +15,7 @@ import {
   SPINE_ANIMATION_SPEED_STEP,
   SPINE_VIEW_SCALE_MAX,
   SPINE_VIEW_SCALE_MIN,
+  SPINE_VIEW_SCALE_STEP,
 } from './spineViewScale'
 import styles from './App.module.scss'
 
@@ -135,8 +136,8 @@ export default function App() {
         return
       }
 
-      // Physical comma / period keys (`code` is layout-independent).
-      if (e.code === 'Comma') {
+      // Animation speed: ArrowLeft / ArrowRight (`code` is layout-independent).
+      if (e.code === 'ArrowLeft') {
         e.preventDefault()
         setAnimationSpeed((s) =>
           Math.max(
@@ -146,13 +147,29 @@ export default function App() {
         )
         return
       }
-      if (e.code === 'Period') {
+      if (e.code === 'ArrowRight') {
         e.preventDefault()
         setAnimationSpeed((s) =>
           Math.min(
             SPINE_ANIMATION_SPEED_MAX,
             s + SPINE_ANIMATION_SPEED_STEP,
           ),
+        )
+        return
+      }
+
+      // `-` / `+`: Minus & NumpadSubtract; Equal (= and + share one key) & NumpadAdd.
+      if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+        e.preventDefault()
+        setCanvasScale((s) =>
+          Math.max(SPINE_VIEW_SCALE_MIN, s - SPINE_VIEW_SCALE_STEP),
+        )
+        return
+      }
+      if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+        e.preventDefault()
+        setCanvasScale((s) =>
+          Math.min(SPINE_VIEW_SCALE_MAX, s + SPINE_VIEW_SCALE_STEP),
         )
         return
       }
