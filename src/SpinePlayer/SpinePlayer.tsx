@@ -9,6 +9,8 @@ interface Props {
   animation: string;
   /** Visual scale of the Pixi view (CSS transform). */
   canvasScale?: number;
+  /** Increment to clear pan to (0,0) without changing scale (e.g. reset control). */
+  layoutResetToken?: number;
   /** Fired once the skeleton is built; names come from {@link SkeletonData#animations}. */
   onAnimationsLoaded?: (animationNames: string[]) => void;
 }
@@ -18,6 +20,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   atlasUrl,
   animation,
   canvasScale = 1,
+  layoutResetToken = 0,
   onAnimationsLoaded,
 }) => {
   const loadId = useId().replace(/:/g, '');
@@ -48,7 +51,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     setPan({ x: 0, y: 0 });
     dragRef.current = null;
     setDragging(false);
-  }, [canvasScale]);
+  }, [canvasScale, layoutResetToken]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!canPan || e.button !== 0) return;

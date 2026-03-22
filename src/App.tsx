@@ -5,12 +5,19 @@ import styles from './App.module.scss'
 const SCALE_MIN = 0.25
 const SCALE_MAX = 3
 const SCALE_STEP = 0.05
+const INITIAL_CANVAS_SCALE = 1
 
 export default function App() {
   const base = import.meta.env.BASE_URL
   const [animation, setAnimation] = useState('1_Idle')
   const [animations, setAnimations] = useState<string[]>([])
-  const [canvasScale, setCanvasScale] = useState(1)
+  const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
+  const [layoutResetToken, setLayoutResetToken] = useState(0)
+
+  const resetLayout = () => {
+    setCanvasScale(INITIAL_CANVAS_SCALE)
+    setLayoutResetToken((n) => n + 1)
+  }
 
   useEffect(() => {
     if (animations.length === 0) return
@@ -64,6 +71,13 @@ export default function App() {
               value={canvasScale}
               onChange={(e) => setCanvasScale(Number(e.target.value))}
             />
+            <button
+              type="button"
+              className={styles.resetButton}
+              onClick={resetLayout}
+            >
+              Reset
+            </button>
           </div>
         </aside>
         <main className={styles.player}>
@@ -72,6 +86,7 @@ export default function App() {
             atlasUrl={`${base}spine/Cat.atlas`}
             animation={animation}
             canvasScale={canvasScale}
+            layoutResetToken={layoutResetToken}
             onAnimationsLoaded={setAnimations}
           />
         </main>
