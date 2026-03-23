@@ -31,6 +31,10 @@ import {
 } from './utils/spineViewScale'
 import styles from './App.module.scss'
 
+/** Touch-primary devices: auto-hide the animation bar; FPS/frame chips stay visible. Tap the player to show the bar again. */
+const COARSE_POINTER_MEDIA = '(hover: none) and (pointer: coarse)'
+const MOBILE_PLAYER_CHROME_HIDE_MS = 5000
+
 const INITIAL_CANVAS_SCALE = 1
 const INITIAL_ANIMATION_SPEED = 1
 
@@ -85,6 +89,71 @@ export default function App() {
   const [playbackNonce, setPlaybackNonce] = useState(0)
   const [scrubDragging, setScrubDragging] = useState(false)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(true)
+
+  const [isCoarsePointer, setIsCoarsePointer] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia(COARSE_POINTER_MEDIA).matches,
+  )
+  const [touchChromeVisible, setTouchChromeVisible] = useState(true)
+  const chromeHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia(COARSE_POINTER_MEDIA)
+    const onChange = () => setIsCoarsePointer(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  const clearChromeHideTimer = useCallback(() => {
+    if (chromeHideTimerRef.current !== null) {
+      clearTimeout(chromeHideTimerRef.current)
+      chromeHideTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleChromeHide = useCallback(() => {
+    clearChromeHideTimer()
+    chromeHideTimerRef.current = window.setTimeout(() => {
+      chromeHideTimerRef.current = null
+      setTouchChromeVisible(false)
+    }, MOBILE_PLAYER_CHROME_HIDE_MS)
+  }, [clearChromeHideTimer])
+
+  const bumpPlayerChrome = useCallback(() => {
+    if (!isCoarsePointer) return
+    setTouchChromeVisible(true)
+    scheduleChromeHide()
+  }, [isCoarsePointer, scheduleChromeHide])
+
+  useEffect(() => {
+    return () => clearChromeHideTimer()
+  }, [clearChromeHideTimer])
+
+  useEffect(() => {
+    if (!isCoarsePointer) {
+      clearChromeHideTimer()
+      return
+    }
+    const id = window.setTimeout(() => {
+      bumpPlayerChrome()
+    }, 0)
+    return () => clearTimeout(id)
+  }, [isCoarsePointer, bumpPlayerChrome, clearChromeHideTimer])
+
+  useEffect(() => {
+    if (!isCoarsePointer) return
+    if (scrubDragging) {
+      clearChromeHideTimer()
+    } else {
+      scheduleChromeHide()
+    }
+  }, [
+    scrubDragging,
+    isCoarsePointer,
+    clearChromeHideTimer,
+    scheduleChromeHide,
+  ])
 
   const playbackTransportRef = useRef(playbackTransport)
   const animationsRef = useRef(animations)
@@ -498,7 +567,14 @@ export default function App() {
             />
           </>
         )}
-        <main className={styles.player}>
+        <main
+          className={`${styles.player}${
+            isCoarsePointer && !touchChromeVisible
+              ? ` ${styles.playerTouchChromeHidden}`
+              : ''
+          }`}
+          onPointerDownCapture={bumpPlayerChrome}
+        >
           <button
             type="button"
             className={`${styles.playerHudChip} ${styles.playerAnimationSpeedFps}`}
