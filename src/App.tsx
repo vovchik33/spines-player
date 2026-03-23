@@ -607,7 +607,10 @@ export default function App() {
                       </svg>
                     </button>
                     <div className={styles.playerScrub}>
-                      <div className={styles.playerScrubTrack}>
+                      <div
+                        className={styles.playerScrubTrack}
+                        data-scrub-dragging={scrubDragging ? '' : undefined}
+                      >
                         <button
                           type="button"
                           className={`${styles.playerHudChip} ${styles.playerAnimLabel}`}

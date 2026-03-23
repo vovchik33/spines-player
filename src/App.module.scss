@@ -271,9 +271,9 @@ button.playerHudChip {
   transition: opacity 0.15s ease;
 }
 
-/* Hover on scrub only — not :focus-within, or the chip stays after click when the range stays focused */
-.playerScrubTrack:hover .playerScrubThumbLabel,
-.playerScrubTrack:has(.playerScrubRange:focus-visible) .playerScrubThumbLabel {
+/* Frame chip: hover on range input only, or while scrub is active */
+.playerScrubTrack:has(.playerScrubRange:hover) .playerScrubThumbLabel,
+.playerScrubTrack[data-scrub-dragging] .playerScrubThumbLabel {
   opacity: 1;
 }
 
