@@ -77,7 +77,7 @@ export default function App() {
   const handlePlay = useCallback(() => {
     const prev = playbackTransportRef.current
     setPlaybackTransport('playing')
-    if (prev !== 'paused') {
+    if (prev === 'playing') {
       bumpPlayback()
     }
   }, [bumpPlayback])
@@ -95,8 +95,7 @@ export default function App() {
   const handleStop = useCallback(() => {
     setScrubDragging(false)
     setPlaybackTransport('stopped')
-    bumpPlayback()
-  }, [bumpPlayback])
+  }, [])
 
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
   const [animationSpeed, setAnimationSpeed] = useState(INITIAL_ANIMATION_SPEED)
@@ -142,9 +141,6 @@ export default function App() {
           return
         }
         setPlaybackTransport('playing')
-        if (prev === 'stopped') {
-          bumpPlayback()
-        }
         return
       }
 
@@ -201,7 +197,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [bumpPlayback])
+  }, [])
 
   const handleLoadSpineFiles = useCallback(async (files: File[]) => {
     console.log('[App] Load Spine: picked files', files.length)
@@ -340,8 +336,7 @@ export default function App() {
     })
   }, [])
 
-  const scrubDisabled =
-    animations.length === 0 || playbackTransport === 'stopped'
+  const scrubDisabled = animations.length === 0
 
   const applyScrubValue = useCallback((value1000: number) => {
     const clamped = Math.max(0, Math.min(1000, Math.round(value1000)))
@@ -367,7 +362,7 @@ export default function App() {
 
   const handleScrubPointerDown = (e: PointerEvent<HTMLInputElement>) => {
     if (scrubDisabled) return
-    if (playbackTransport === 'playing') {
+    if (playbackTransport === 'playing' || playbackTransport === 'stopped') {
       setPlaybackTransport('paused')
     }
     scrubDraggingRef.current = true
@@ -390,7 +385,8 @@ export default function App() {
     if (scrubDisabled) return
     if (
       !scrubDraggingRef.current &&
-      playbackTransportRef.current === 'playing'
+      (playbackTransportRef.current === 'playing' ||
+        playbackTransportRef.current === 'stopped')
     ) {
       setPlaybackTransport('paused')
       scrubDraggingRef.current = true

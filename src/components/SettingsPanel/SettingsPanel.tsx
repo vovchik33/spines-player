@@ -168,7 +168,7 @@ export function SettingsPanel({
           <button
             type="button"
             className={styles.playbackButton}
-            disabled={!canPlayback || playbackTransport === 'stopped'}
+            disabled={!canPlayback}
             onClick={onPause}
             aria-pressed={playbackTransport === 'paused'}
           >

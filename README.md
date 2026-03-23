@@ -42,10 +42,8 @@ If you do not load custom files, the app uses the bundled **Cat** skeleton from 
 - **Animation** dropdown lists all clips from the skeleton. After you pick one, the dropdown **blurs** so global shortcuts work without an extra click.
 - **Play** — starts or **restarts** the current clip (from pause or from stop, or replay while already playing). **Resume** from pause does **not** restart the timeline.
 - **Pause** — freezes the clip (`timeScale` 0); press again to **resume** from the same frame (**toggle**, same idea as **P**).
-- **Stop** — clears the track and returns the skeleton to the **setup pose**.
+- **Stop** — same as **Pause**, but seeks the current clip to the **first frame** (track stays active; not setup pose).
 - **Loop animation** — when checked, the active track loops; when unchecked, it plays **once** (then stops at the end unless you change mode).
-
-**Pause** is disabled while **stopped**.
 
 ## Spine scale
 

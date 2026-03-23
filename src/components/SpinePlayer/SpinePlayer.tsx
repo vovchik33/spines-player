@@ -218,7 +218,7 @@ interface Props {
   /** When loading from blobs, map atlas page name (first line of .atlas) → texture object URL. */
   atlasImageMap?: Record<string, string>;
   animation: string;
-  /** playing = advance animation; paused = frozen frame; stopped = setup pose, track cleared. */
+  /** playing = advance; paused = frozen; stopped = frozen at first frame of current clip (like pause + rewind). */
   playbackTransport: SpinePlaybackTransport;
   /** When playing or paused, whether track 0 loops. */
   animationLoop: boolean;
@@ -232,9 +232,9 @@ interface Props {
   layoutResetToken?: number;
   /** Fired once the skeleton is built; names come from {@link SkeletonData#animations}. */
   onAnimationsLoaded?: (animationNames: string[]) => void;
-  /** Current / total display frames from track 0 (30 samples per second of clip duration); `null` when stopped or no clip. */
+  /** Current / total display frames from track 0 (30 samples per second of clip duration); `null` when no clip on track 0. */
   onAnimationFrames?: (info: SpineAnimationFrameInfo | null) => void;
-  /** Track 0 position ∈ [0, 1] by duration; emitted on the Pixi ticker while playing/paused with a clip. */
+  /** Track 0 position ∈ [0, 1] by duration; emitted on the Pixi ticker when track 0 has a clip. */
   onAnimationProgressNormalized?: (normalized: number) => void;
   /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
   onSpineScaleDelta?: (delta: number) => void;
@@ -271,16 +271,36 @@ function applySpinePlayback(
   animationSpeed: number,
   lastNonceRef: { current: number | null },
 ) {
+  const name = pickAnimationToPlay(spine, preferred);
   if (transport === 'stopped') {
-    spine.state.timeScale = 1;
-    spine.state.clearTrack(0);
-    spine.skeleton.setToSetupPose();
+    if (!name) {
+      console.warn('[SpinePlayer] stop skipped: no clips on skeleton', { preferred });
+      return;
+    }
+    const trackBefore = spine.state.tracks[0];
+    const mismatched =
+      !trackBefore?.animation || trackBefore.animation.name !== name;
+    const nonceRestart =
+      lastNonceRef.current !== null && lastNonceRef.current !== playbackNonce;
+    if (mismatched || nonceRestart) {
+      spine.state.setAnimation(0, name, animationLoop);
+    } else {
+      const t0 = spine.state.tracks[0];
+      if (t0) t0.loop = animationLoop;
+    }
+    const t = spine.state.tracks[0];
+    if (t) {
+      t.trackTime = 0;
+      t.animationLast = -1;
+    }
+    spine.state.timeScale = 0;
+    spine.state.apply(spine.skeleton);
+    spine.skeleton.updateWorldTransform(Physics.update);
     lastNonceRef.current = playbackNonce;
-    console.log('[SpinePlayer] playback stop (clear track 0, setup pose)');
+    console.log('[SpinePlayer] playback stop (pause at first frame)');
     return;
   }
 
-  const name = pickAnimationToPlay(spine, preferred);
   if (!name) {
     console.warn('[SpinePlayer] setAnimation skipped: no clips on skeleton', { preferred });
     return;
@@ -624,14 +644,6 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
         if (!framesCb && !progressCb) return;
         const spineNow = spineRef.current;
         if (!spineNow) return;
-        if (playbackTransportRef.current === 'stopped') {
-          if (framesCb && lastFrameEmitKey !== '—') {
-            lastFrameEmitKey = '—';
-            framesCb(null);
-          }
-          progressCb?.(0);
-          return;
-        }
         const track = spineNow.state.tracks[0];
         if (!track?.animation) {
           if (framesCb && lastFrameEmitKey !== '—') {
