@@ -24,6 +24,42 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* Dim viewport behind bottom sheet (same aspect rule as SettingsPanel.sheet) */
+.settingsSheetBackdrop {
+  display: none;
+}
+
+@media (max-aspect-ratio: 2/3) {
+  .settingsSheetBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    animation: settingsBackdropFadeIn 0.25s ease-out;
+  }
+}
+
+@media (max-aspect-ratio: 2/3) and (prefers-reduced-motion: reduce) {
+  .settingsSheetBackdrop {
+    animation: none;
+  }
+}
+
+@keyframes settingsBackdropFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .player {
   position: relative;
   flex: 1;

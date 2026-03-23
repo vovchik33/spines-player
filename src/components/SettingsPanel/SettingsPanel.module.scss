@@ -410,3 +410,46 @@
     color: var(--settings-fg-muted);
   }
 }
+
+/* Tall/narrow viewports: width < height/1.5  ⟺  width/height < 2/3 */
+@media (max-aspect-ratio: 2/3) {
+  .panel {
+    flex: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    align-self: auto;
+    height: 80vh;
+    height: 80dvh;
+    border-radius: 12px 12px 0 0;
+    z-index: 101;
+    box-shadow:
+      0 -12px 40px rgba(0, 0, 0, 0.5),
+      0 -1px 0 rgba(255, 255, 255, 0.06) inset;
+    animation: settingsPanelSlideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .panelFooter {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-aspect-ratio: 2/3) and (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+@keyframes settingsPanelSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}

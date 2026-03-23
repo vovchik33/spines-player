@@ -468,27 +468,35 @@ export default function App() {
     <div className={styles.layout}>
       <div className={styles.shell}>
         {settingsPanelOpen && (
-          <SettingsPanel
-            animations={animations}
-            selectedAnimation={selectedAnimation}
-            onAnimationChange={setAnimation}
-            playbackTransport={playbackTransport}
-            animationLoop={animationLoop}
-            onAnimationLoopChange={setAnimationLoop}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onStop={handleStop}
-            canvasScale={canvasScale}
-            onCanvasScaleChange={setCanvasScale}
-            animationSpeed={animationSpeed}
-            onAnimationSpeedChange={setAnimationSpeed}
-            onResetAnimationSpeed={resetAnimationSpeed}
-            onResetLayout={resetLayout}
-            onLoadSpineFiles={handleLoadSpineFiles}
-            spineLoadError={spineLoadError}
-            loadedSpineName={loadedSpineName}
-            onClose={() => setSettingsPanelOpen(false)}
-          />
+          <>
+            <button
+              type="button"
+              className={styles.settingsSheetBackdrop}
+              aria-label="Close settings"
+              onClick={() => setSettingsPanelOpen(false)}
+            />
+            <SettingsPanel
+              animations={animations}
+              selectedAnimation={selectedAnimation}
+              onAnimationChange={setAnimation}
+              playbackTransport={playbackTransport}
+              animationLoop={animationLoop}
+              onAnimationLoopChange={setAnimationLoop}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onStop={handleStop}
+              canvasScale={canvasScale}
+              onCanvasScaleChange={setCanvasScale}
+              animationSpeed={animationSpeed}
+              onAnimationSpeedChange={setAnimationSpeed}
+              onResetAnimationSpeed={resetAnimationSpeed}
+              onResetLayout={resetLayout}
+              onLoadSpineFiles={handleLoadSpineFiles}
+              spineLoadError={spineLoadError}
+              loadedSpineName={loadedSpineName}
+              onClose={() => setSettingsPanelOpen(false)}
+            />
+          </>
         )}
         <main className={styles.player}>
           <div
