@@ -18,6 +18,28 @@ const SPEED_MIN = SPINE_ANIMATION_SPEED_MIN;
 const SPEED_MAX = SPINE_ANIMATION_SPEED_MAX;
 const SPEED_STEP = SPINE_ANIMATION_SPEED_STEP;
 
+/**
+ * iOS Files often types .atlas as text/plain or octet-stream and hides them if `accept` is
+ * extension-only. MIME types plus a wildcard media type keep the picker inclusive;
+ * `classifySpineFiles` still validates.
+ */
+const SPINE_FILE_INPUT_ACCEPT = [
+  ".json",
+  ".skel",
+  ".atlas",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  "application/json",
+  "text/plain",
+  "application/octet-stream",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "*/*",
+].join(",");
+
 /** Drop focus after pointer drag/click; Escape for keyboard exit (arrows keep focus while adjusting). */
 const rangeReleaseFocusProps = {
   onPointerUp: (e: React.PointerEvent<HTMLInputElement>) => {
@@ -89,7 +111,7 @@ export function SettingsPanel({
             ref={spineFileInputRef}
             className={styles.fileInput}
             type="file"
-            accept=".json,.skel,.atlas,.png,.jpg,.jpeg,.webp"
+            accept={SPINE_FILE_INPUT_ACCEPT}
             multiple
             aria-label="Spine files: skeleton, atlas, and texture"
             onChange={(e) => {
@@ -123,7 +145,9 @@ export function SettingsPanel({
           </div>
           <p className={styles.loadHint}>
             Select 3 files: .json or .skel, .atlas, and image (.png / .jpg /
-            .webp).
+            .webp). On iPhone, use Files; if .atlas is missing from the short
+            list, open the full browser so every file type is shown; the app
+            still checks names.
           </p>
           {spineLoadError ? (
             <p className={styles.loadError} role="alert">
