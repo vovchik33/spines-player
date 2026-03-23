@@ -35,10 +35,9 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.playerFramesCounter {
+.playerHudChip {
   position: absolute;
   top: 8px;
-  right: 10px;
   z-index: 2;
   padding: 4px 8px;
   border-radius: 4px;
@@ -52,6 +51,14 @@
   border: 1px solid rgba(58, 58, 70, 0.65);
   pointer-events: none;
   user-select: none;
+}
+
+.playerAnimationSpeedFps {
+  left: 10px;
+}
+
+.playerFramesCounter {
+  right: 10px;
 }
 
 .playerMeasure {

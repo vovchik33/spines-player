@@ -22,7 +22,7 @@ import styles from './SpinePlayer.module.scss';
 const SPINE_DATA_SCALE = 1;
 
 /** Spine is time-based; we derive a frame index for display at this reference rate (common editor default). */
-const SPINE_FRAME_COUNTER_FPS = 30;
+export const SPINE_FRAME_COUNTER_FPS = 30;
 
 export type SpineAnimationFrameInfo = { current: number; total: number };
 

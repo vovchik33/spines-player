@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   Pixi8SpinePlayer,
+  SPINE_FRAME_COUNTER_FPS,
   type Pixi8SpinePlayerHandle,
   type SpineAnimationFrameInfo,
   type SpinePlaybackTransport,
@@ -403,6 +404,8 @@ export default function App() {
     finishScrubInteraction(lastScrubValue1000Ref.current)
   }
 
+  const effectiveDisplayFps = SPINE_FRAME_COUNTER_FPS * animationSpeed
+
   return (
     <div className={styles.layout}>
       <div className={styles.shell}>
@@ -428,7 +431,14 @@ export default function App() {
         />
         <main className={styles.player}>
           <div
-            className={styles.playerFramesCounter}
+            className={`${styles.playerHudChip} ${styles.playerAnimationSpeedFps}`}
+            aria-live="polite"
+            aria-label={`Display frame rate about ${effectiveDisplayFps.toFixed(1)} frames per second at ${animationSpeed.toFixed(2)}× animation speed (${SPINE_FRAME_COUNTER_FPS} fps reference)`}
+          >
+            {effectiveDisplayFps.toFixed(1)} fps
+          </div>
+          <div
+            className={`${styles.playerHudChip} ${styles.playerFramesCounter}`}
             aria-live="polite"
             aria-label={
               animationFrames
