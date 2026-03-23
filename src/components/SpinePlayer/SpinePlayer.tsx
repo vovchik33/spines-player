@@ -1,6 +1,15 @@
-import React, { useCallback, useEffect, useId, useLayoutEffect, useRef } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 import {
   AtlasAttachmentLoader,
+  Physics,
   SkeletonBinary,
   SkeletonJson,
   TextureAtlas,
@@ -16,6 +25,30 @@ const SPINE_DATA_SCALE = 1;
 const SPINE_FRAME_COUNTER_FPS = 30;
 
 export type SpineAnimationFrameInfo = { current: number; total: number };
+
+export type Pixi8SpinePlayerHandle = {
+  /** Seek track 0 to `normalized` ∈ [0, 1] along the active clip (by duration). */
+  seekTrack0ToNormalized: (normalized: number) => void;
+};
+
+/** Apply pose immediately after changing {@link TrackEntry#trackTime}. */
+function seekSpineTrack0ToNormalized(spine: Spine, normalized: number) {
+  const track = spine.state.tracks[0];
+  if (!track?.animation) return;
+  const duration = track.animationEnd - track.animationStart;
+  if (duration <= 0) return;
+  const u = Math.max(0, Math.min(1, normalized));
+  const local =
+    u >= 1 ? Math.max(0, duration - 1e-5) : u * duration;
+  if (track.loop) {
+    track.trackTime = local % duration;
+  } else {
+    track.trackTime = Math.min(local, duration);
+  }
+  track.animationLast = -1;
+  spine.state.apply(spine.skeleton);
+  spine.skeleton.updateWorldTransform(Physics.update);
+}
 
 /** Host or ancestor with this attribute supplies layout size for Pixi init / resize. */
 const LAYOUT_MEASURE_SELECTOR = '[data-layout-measure]';
@@ -201,6 +234,8 @@ interface Props {
   onAnimationsLoaded?: (animationNames: string[]) => void;
   /** Current / total display frames from track 0 (30 samples per second of clip duration); `null` when stopped or no clip. */
   onAnimationFrames?: (info: SpineAnimationFrameInfo | null) => void;
+  /** Track 0 position ∈ [0, 1] by duration; emitted on the Pixi ticker while playing/paused with a clip. */
+  onAnimationProgressNormalized?: (normalized: number) => void;
   /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
   onSpineScaleDelta?: (delta: number) => void;
   /** Shift + wheel over canvas: delta adjusts playback speed like the slider (caller clamps). */
@@ -274,22 +309,27 @@ function applySpinePlayback(
   spine.state.timeScale = transport === 'playing' ? animationSpeed : 0;
 }
 
-export const Pixi8SpinePlayer: React.FC<Props> = ({
-  skeletonUrl,
-  atlasUrl,
-  atlasImageMap,
-  animation,
-  playbackTransport,
-  animationLoop,
-  playbackNonce,
-  animationSpeed,
-  spineScale,
-  layoutResetToken = 0,
-  onAnimationsLoaded,
-  onAnimationFrames,
-  onSpineScaleDelta,
-  onAnimationSpeedDelta,
-}) => {
+export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
+  function Pixi8SpinePlayer(
+    {
+      skeletonUrl,
+      atlasUrl,
+      atlasImageMap,
+      animation,
+      playbackTransport,
+      animationLoop,
+      playbackNonce,
+      animationSpeed,
+      spineScale,
+      layoutResetToken = 0,
+      onAnimationsLoaded,
+      onAnimationFrames,
+      onAnimationProgressNormalized,
+      onSpineScaleDelta,
+      onAnimationSpeedDelta,
+    },
+    ref,
+  ) {
   /** Disambiguate multiple player instances; aliases also get a per-load seq (see loadSeqRef). */
   const loadId = useId().replace(/:/g, '');
   const loadSeqRef = useRef(0);
@@ -301,6 +341,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   const applyViewRef = useRef<() => void>(() => {});
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
   const onAnimationFramesRef = useRef(onAnimationFrames);
+  const onAnimationProgressNormalizedRef = useRef(onAnimationProgressNormalized);
   const onSpineScaleDeltaRef = useRef(onSpineScaleDelta);
   const onAnimationSpeedDeltaRef = useRef(onAnimationSpeedDelta);
   const playbackTransportRef = useRef(playbackTransport);
@@ -334,8 +375,20 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   }, [onAnimationFrames]);
 
   useEffect(() => {
+    onAnimationProgressNormalizedRef.current = onAnimationProgressNormalized;
+  }, [onAnimationProgressNormalized]);
+
+  useEffect(() => {
     playbackTransportRef.current = playbackTransport;
   }, [playbackTransport]);
+
+  useImperativeHandle(ref, () => ({
+    seekTrack0ToNormalized: (normalized: number) => {
+      const spine = spineRef.current;
+      if (!spine) return;
+      seekSpineTrack0ToNormalized(spine, normalized);
+    },
+  }));
 
   useEffect(() => {
     onSpineScaleDeltaRef.current = onSpineScaleDelta;
@@ -566,43 +619,52 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
 
       let lastFrameEmitKey = '';
       const onFramesTick = () => {
-        const cb = onAnimationFramesRef.current;
-        if (!cb) return;
+        const framesCb = onAnimationFramesRef.current;
+        const progressCb = onAnimationProgressNormalizedRef.current;
+        if (!framesCb && !progressCb) return;
         const spineNow = spineRef.current;
         if (!spineNow) return;
         if (playbackTransportRef.current === 'stopped') {
-          if (lastFrameEmitKey !== '—') {
+          if (framesCb && lastFrameEmitKey !== '—') {
             lastFrameEmitKey = '—';
-            cb(null);
+            framesCb(null);
           }
+          progressCb?.(0);
           return;
         }
         const track = spineNow.state.tracks[0];
         if (!track?.animation) {
-          if (lastFrameEmitKey !== '—') {
+          if (framesCb && lastFrameEmitKey !== '—') {
             lastFrameEmitKey = '—';
-            cb(null);
+            framesCb(null);
           }
+          progressCb?.(0);
           return;
         }
         const duration = track.animationEnd - track.animationStart;
         if (duration <= 0) {
-          const key = '1/1';
-          if (key !== lastFrameEmitKey) {
-            lastFrameEmitKey = key;
-            cb({ current: 1, total: 1 });
+          if (framesCb) {
+            const key = '1/1';
+            if (key !== lastFrameEmitKey) {
+              lastFrameEmitKey = key;
+              framesCb({ current: 1, total: 1 });
+            }
           }
+          progressCb?.(0);
           return;
         }
         const local = Math.max(0, track.getAnimationTime() - track.animationStart);
-        const total = Math.max(1, Math.ceil(duration * SPINE_FRAME_COUNTER_FPS));
-        const idx0 = Math.floor(local * SPINE_FRAME_COUNTER_FPS);
-        const current = Math.min(Math.max(1, idx0 + 1), total);
-        const key = `${current}/${total}`;
-        if (key !== lastFrameEmitKey) {
-          lastFrameEmitKey = key;
-          cb({ current, total });
+        if (framesCb) {
+          const total = Math.max(1, Math.ceil(duration * SPINE_FRAME_COUNTER_FPS));
+          const idx0 = Math.floor(local * SPINE_FRAME_COUNTER_FPS);
+          const current = Math.min(Math.max(1, idx0 + 1), total);
+          const key = `${current}/${total}`;
+          if (key !== lastFrameEmitKey) {
+            lastFrameEmitKey = key;
+            framesCb({ current, total });
+          }
         }
+        progressCb?.(Math.min(1, local / duration));
       };
       app.ticker.add(onFramesTick);
       detachFrameTicker = () => {
@@ -734,4 +796,6 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   }, []);
 
   return <div ref={containerRef} className={styles.host} />;
-};
+});
+
+Pixi8SpinePlayer.displayName = 'Pixi8SpinePlayer';

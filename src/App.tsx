@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type PointerEvent,
+} from 'react'
 import {
   Pixi8SpinePlayer,
+  type Pixi8SpinePlayerHandle,
   type SpineAnimationFrameInfo,
   type SpinePlaybackTransport,
 } from './components/SpinePlayer/SpinePlayer'
@@ -46,6 +54,7 @@ export default function App() {
     useState<SpinePlaybackTransport>('playing')
   const [animationLoop, setAnimationLoop] = useState(true)
   const [playbackNonce, setPlaybackNonce] = useState(0)
+  const [scrubDragging, setScrubDragging] = useState(false)
 
   const playbackTransportRef = useRef(playbackTransport)
   const animationsRef = useRef(animations)
@@ -83,6 +92,7 @@ export default function App() {
   }, [])
 
   const handleStop = useCallback(() => {
+    setScrubDragging(false)
     setPlaybackTransport('stopped')
     bumpPlayback()
   }, [bumpPlayback])
@@ -299,6 +309,100 @@ export default function App() {
     [],
   )
 
+  const spinePlayerRef = useRef<Pixi8SpinePlayerHandle>(null)
+  const [playbackProgress1000, setPlaybackProgress1000] = useState(0)
+  const [scrubUiValue, setScrubUiValue] = useState(0)
+  const scrubDraggingRef = useRef(false)
+  const lastScrubValue1000Ref = useRef(0)
+  const rafProgressRef = useRef(0)
+  const pendingProgressRef = useRef(0)
+
+  useEffect(() => {
+    scrubDraggingRef.current = scrubDragging
+  }, [scrubDragging])
+
+  useEffect(() => {
+    return () => {
+      if (rafProgressRef.current) {
+        cancelAnimationFrame(rafProgressRef.current)
+      }
+    }
+  }, [])
+
+  const onAnimationProgressNormalized = useCallback((n: number) => {
+    if (scrubDraggingRef.current) return
+    pendingProgressRef.current = n
+    if (rafProgressRef.current) return
+    rafProgressRef.current = requestAnimationFrame(() => {
+      rafProgressRef.current = 0
+      setPlaybackProgress1000(Math.round(pendingProgressRef.current * 1000))
+    })
+  }, [])
+
+  const scrubDisabled =
+    animations.length === 0 || playbackTransport === 'stopped'
+
+  const applyScrubValue = useCallback((value1000: number) => {
+    const clamped = Math.max(0, Math.min(1000, Math.round(value1000)))
+    lastScrubValue1000Ref.current = clamped
+    setScrubUiValue(clamped)
+    spinePlayerRef.current?.seekTrack0ToNormalized(clamped / 1000)
+  }, [])
+
+  const finishScrubInteraction = useCallback((value1000: number) => {
+    if (!scrubDraggingRef.current) return
+    if (rafProgressRef.current) {
+      cancelAnimationFrame(rafProgressRef.current)
+      rafProgressRef.current = 0
+    }
+    const v = Math.max(0, Math.min(1000, Math.round(value1000)))
+    lastScrubValue1000Ref.current = v
+    setScrubUiValue(v)
+    pendingProgressRef.current = v / 1000
+    scrubDraggingRef.current = false
+    setPlaybackProgress1000(v)
+    setScrubDragging(false)
+  }, [])
+
+  const handleScrubPointerDown = (e: PointerEvent<HTMLInputElement>) => {
+    if (scrubDisabled) return
+    if (playbackTransport === 'playing') {
+      setPlaybackTransport('paused')
+    }
+    scrubDraggingRef.current = true
+    setScrubDragging(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+    requestAnimationFrame(() =>
+      applyScrubValue(Number(e.currentTarget.value)),
+    )
+  }
+
+  const handleScrubPointerUp = (e: PointerEvent<HTMLInputElement>) => {
+    if (!scrubDraggingRef.current) return
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    finishScrubInteraction(Number(e.currentTarget.value))
+  }
+
+  const handleScrubChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (scrubDisabled) return
+    if (
+      !scrubDraggingRef.current &&
+      playbackTransportRef.current === 'playing'
+    ) {
+      setPlaybackTransport('paused')
+      scrubDraggingRef.current = true
+      setScrubDragging(true)
+    }
+    applyScrubValue(Number(e.target.value))
+  }
+
+  const handleScrubBlur = () => {
+    if (!scrubDraggingRef.current) return
+    finishScrubInteraction(lastScrubValue1000Ref.current)
+  }
+
   return (
     <div className={styles.layout}>
       <div className={styles.shell}>
@@ -338,6 +442,7 @@ export default function App() {
           </div>
           <div className={styles.playerMeasure} data-layout-measure>
             <Pixi8SpinePlayer
+              ref={spinePlayerRef}
               skeletonUrl={skeletonUrl}
               atlasUrl={atlasUrl}
               atlasImageMap={atlasImageMap}
@@ -355,6 +460,7 @@ export default function App() {
                 setAnimations(names)
               }}
               onAnimationFrames={onAnimationFrames}
+              onAnimationProgressNormalized={onAnimationProgressNormalized}
             />
             <div
               className={styles.playerAnimationBar}
@@ -391,6 +497,25 @@ export default function App() {
                       ? 'Loading…'
                       : selectedAnimation || '—'}
                   </span>
+                  <div className={styles.playerScrub}>
+                    <input
+                      type="range"
+                      className={styles.playerScrubRange}
+                      min={0}
+                      max={1000}
+                      step={1}
+                      disabled={scrubDisabled}
+                      value={
+                        scrubDragging ? scrubUiValue : playbackProgress1000
+                      }
+                      aria-label="Animation progress"
+                      onPointerDown={handleScrubPointerDown}
+                      onPointerUp={handleScrubPointerUp}
+                      onPointerCancel={handleScrubPointerUp}
+                      onChange={handleScrubChange}
+                      onBlur={handleScrubBlur}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
