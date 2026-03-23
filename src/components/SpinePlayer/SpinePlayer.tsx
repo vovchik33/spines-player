@@ -16,7 +16,11 @@ import {
 } from '@esotericsoftware/spine-core';
 import { Application, Assets, Cache, Texture } from 'pixi.js';
 import { Spine, SpineTexture } from '@esotericsoftware/spine-pixi-v8'; // Official v8 runtime
-import { SPINE_ANIMATION_SPEED_STEP } from '../../utils/spineViewScale';
+import {
+  SPINE_ANIMATION_SPEED_STEP,
+  SPINE_VIEW_SCALE_MAX,
+  SPINE_VIEW_SCALE_MIN,
+} from '../../utils/spineViewScale';
 import styles from './SpinePlayer.module.scss';
 
 const SPINE_DATA_SCALE = 1;
@@ -550,13 +554,38 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
         panStart: { x: 0, y: 0 },
       };
 
+      /** Active pointers on the canvas (for two-finger pinch on touch). */
+      const activePointers = new Map<
+        number,
+        { clientX: number; clientY: number }
+      >();
+
+      let pinch: null | { startDist: number; anchorScale: number } = null;
+
       const setGrabCursor = (grabbing: boolean) => {
         canvas.style.cursor = grabbing ? 'grabbing' : 'grab';
       };
 
-      const onPointerDown = (e: PointerEvent) => {
-        if (e.button !== 0) return;
-        e.preventDefault();
+      const twoPointerDistance = (): number | null => {
+        if (activePointers.size < 2) return null;
+        const pts = [...activePointers.values()];
+        const dx = pts[0].clientX - pts[1].clientX;
+        const dy = pts[0].clientY - pts[1].clientY;
+        return Math.hypot(dx, dy);
+      };
+
+      const releaseDragCapture = () => {
+        if (!drag.active) return;
+        drag.active = false;
+        setGrabCursor(false);
+        try {
+          canvas.releasePointerCapture(drag.pointerId);
+        } catch {
+          /* already released */
+        }
+      };
+
+      const beginSingleFingerPan = (e: PointerEvent) => {
         drag.active = true;
         drag.pointerId = e.pointerId;
         drag.startClientX = e.clientX;
@@ -566,7 +595,82 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
         canvas.setPointerCapture(e.pointerId);
       };
 
+      const maybeResumePanAfterPinch = () => {
+        if (activePointers.size !== 1) return;
+        const [pid, pt] = [...activePointers.entries()][0];
+        drag.active = true;
+        drag.pointerId = pid;
+        drag.startClientX = pt.clientX;
+        drag.startClientY = pt.clientY;
+        drag.panStart = { ...panRef.current };
+        setGrabCursor(true);
+        canvas.setPointerCapture(pid);
+      };
+
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        activePointers.set(e.pointerId, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        });
+
+        if (activePointers.size >= 2) {
+          releaseDragCapture();
+          const d = twoPointerDistance();
+          if (d != null && d > 8) {
+            pinch = {
+              startDist: Math.max(d, 1e-3),
+              anchorScale: spineScaleRef.current,
+            };
+          }
+          return;
+        }
+
+        if (activePointers.size === 1) {
+          beginSingleFingerPan(e);
+        }
+      };
+
       const onPointerMove = (e: PointerEvent) => {
+        if (!activePointers.has(e.pointerId)) return;
+        activePointers.set(e.pointerId, {
+          clientX: e.clientX,
+          clientY: e.clientY,
+        });
+
+        if (activePointers.size >= 2) {
+          if (pinch == null) {
+            const d0 = twoPointerDistance();
+            if (d0 != null && d0 > 8) {
+              releaseDragCapture();
+              pinch = {
+                startDist: Math.max(d0, 1e-3),
+                anchorScale: spineScaleRef.current,
+              };
+            }
+          }
+          if (pinch != null) {
+            const d = twoPointerDistance();
+            if (d == null || d < 1e-3) return;
+            const scaleFn = onSpineScaleDeltaRef.current;
+            if (!scaleFn) return;
+            const targetRaw =
+              pinch.anchorScale * (d / pinch.startDist);
+            const target = Math.min(
+              SPINE_VIEW_SCALE_MAX,
+              Math.max(SPINE_VIEW_SCALE_MIN, targetRaw),
+            );
+            const current = spineScaleRef.current;
+            const delta = target - current;
+            if (Math.abs(delta) > 1e-5) {
+              scaleFn(delta);
+              spineScaleRef.current = target;
+            }
+          }
+          return;
+        }
+
         if (!drag.active || e.pointerId !== drag.pointerId) return;
         panRef.current.x =
           drag.panStart.x + (e.clientX - drag.startClientX);
@@ -575,26 +679,34 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
         applyViewRef.current();
       };
 
-      const endDrag = (e: PointerEvent) => {
-        if (!drag.active || e.pointerId !== drag.pointerId) return;
-        drag.active = false;
-        setGrabCursor(false);
-        try {
-          canvas.releasePointerCapture(e.pointerId);
-        } catch {
-          /* already released */
+      const onPointerUpOrCancel = (e: PointerEvent) => {
+        const wasPinching = pinch != null && activePointers.size >= 2;
+        activePointers.delete(e.pointerId);
+
+        if (activePointers.size < 2) {
+          pinch = null;
+        }
+
+        if (drag.active && e.pointerId === drag.pointerId) {
+          releaseDragCapture();
+        }
+
+        if (wasPinching && activePointers.size === 1) {
+          maybeResumePanAfterPinch();
         }
       };
 
-      const onLostPointerCapture = () => {
+      const onLostPointerCapture = (e: PointerEvent) => {
+        activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) pinch = null;
         drag.active = false;
         setGrabCursor(false);
       };
 
       canvas.addEventListener('pointerdown', onPointerDown);
       canvas.addEventListener('pointermove', onPointerMove);
-      canvas.addEventListener('pointerup', endDrag);
-      canvas.addEventListener('pointercancel', endDrag);
+      canvas.addEventListener('pointerup', onPointerUpOrCancel);
+      canvas.addEventListener('pointercancel', onPointerUpOrCancel);
       canvas.addEventListener('lostpointercapture', onLostPointerCapture);
 
       const WHEEL_SCALE_STEP = 0.06;
@@ -625,8 +737,8 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       detachCanvasPointers = () => {
         canvas.removeEventListener('pointerdown', onPointerDown);
         canvas.removeEventListener('pointermove', onPointerMove);
-        canvas.removeEventListener('pointerup', endDrag);
-        canvas.removeEventListener('pointercancel', endDrag);
+        canvas.removeEventListener('pointerup', onPointerUpOrCancel);
+        canvas.removeEventListener('pointercancel', onPointerUpOrCancel);
         canvas.removeEventListener('lostpointercapture', onLostPointerCapture);
       };
 
@@ -635,7 +747,9 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       };
 
       applyViewRef.current();
-      console.log('[SpinePlayer] spine added to stage; pointer pan + scale on Spine; init done');
+      console.log(
+        '[SpinePlayer] spine added to stage; pointer pan, pinch scale (2 touches), wheel scale',
+      );
 
       let lastFrameEmitKey = '';
       const onFramesTick = () => {
