@@ -10,6 +10,8 @@ export default defineConfig({
     dedupe: ['@esotericsoftware/spine-core'],
   },
   server: {
+    // Listen on LAN so phones/tablets can open http://<your-ip>:5173
+    host: true,
     // Native FS events often miss saves under iCloud Documents, Docker mounts, or network drives.
     watch: {
       usePolling: true,
