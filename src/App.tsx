@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Pixi8SpinePlayer,
+  type SpineAnimationFrameInfo,
   type SpinePlaybackTransport,
 } from './components/SpinePlayer/SpinePlayer'
 import { SettingsPanel } from './components/SettingsPanel/SettingsPanel'
@@ -288,6 +289,16 @@ export default function App() {
   const atlasImageMap = customSpine?.atlasImageMap
   const loadedSpineName = customSpine?.displayName ?? 'Cat'
 
+  const [animationFrames, setAnimationFrames] =
+    useState<SpineAnimationFrameInfo | null>(null)
+
+  const onAnimationFrames = useCallback(
+    (info: SpineAnimationFrameInfo | null) => {
+      setAnimationFrames(info)
+    },
+    [],
+  )
+
   return (
     <div className={styles.layout}>
       <div className={styles.shell}>
@@ -312,6 +323,19 @@ export default function App() {
           loadedSpineName={loadedSpineName}
         />
         <main className={styles.player}>
+          <div
+            className={styles.playerFramesCounter}
+            aria-live="polite"
+            aria-label={
+              animationFrames
+                ? `Animation frame ${animationFrames.current} of ${animationFrames.total}`
+                : 'Animation frame'
+            }
+          >
+            {animationFrames
+              ? `${animationFrames.current} / ${animationFrames.total}`
+              : '—'}
+          </div>
           <div className={styles.playerMeasure} data-layout-measure>
             <Pixi8SpinePlayer
               skeletonUrl={skeletonUrl}
@@ -330,6 +354,7 @@ export default function App() {
                 console.log('[App] onAnimationsLoaded', { count: names.length, names })
                 setAnimations(names)
               }}
+              onAnimationFrames={onAnimationFrames}
             />
             <div
               className={styles.playerAnimationBar}

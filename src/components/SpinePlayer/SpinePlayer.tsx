@@ -12,6 +12,11 @@ import styles from './SpinePlayer.module.scss';
 
 const SPINE_DATA_SCALE = 1;
 
+/** Spine is time-based; we derive a frame index for display at this reference rate (common editor default). */
+const SPINE_FRAME_COUNTER_FPS = 30;
+
+export type SpineAnimationFrameInfo = { current: number; total: number };
+
 /** Host or ancestor with this attribute supplies layout size for Pixi init / resize. */
 const LAYOUT_MEASURE_SELECTOR = '[data-layout-measure]';
 
@@ -194,6 +199,8 @@ interface Props {
   layoutResetToken?: number;
   /** Fired once the skeleton is built; names come from {@link SkeletonData#animations}. */
   onAnimationsLoaded?: (animationNames: string[]) => void;
+  /** Current / total display frames from track 0 (30 samples per second of clip duration); `null` when stopped or no clip. */
+  onAnimationFrames?: (info: SpineAnimationFrameInfo | null) => void;
   /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
   onSpineScaleDelta?: (delta: number) => void;
   /** Shift + wheel over canvas: delta adjusts playback speed like the slider (caller clamps). */
@@ -279,6 +286,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   spineScale,
   layoutResetToken = 0,
   onAnimationsLoaded,
+  onAnimationFrames,
   onSpineScaleDelta,
   onAnimationSpeedDelta,
 }) => {
@@ -292,8 +300,10 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   const panRef = useRef({ x: 0, y: 0 });
   const applyViewRef = useRef<() => void>(() => {});
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
+  const onAnimationFramesRef = useRef(onAnimationFrames);
   const onSpineScaleDeltaRef = useRef(onSpineScaleDelta);
   const onAnimationSpeedDeltaRef = useRef(onAnimationSpeedDelta);
+  const playbackTransportRef = useRef(playbackTransport);
   const lastPlaybackNonceRef = useRef<number | null>(null);
 
   const applySpineViewTransform = useCallback(() => {
@@ -320,6 +330,14 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
   }, [onAnimationsLoaded]);
 
   useEffect(() => {
+    onAnimationFramesRef.current = onAnimationFrames;
+  }, [onAnimationFrames]);
+
+  useEffect(() => {
+    playbackTransportRef.current = playbackTransport;
+  }, [playbackTransport]);
+
+  useEffect(() => {
     onSpineScaleDeltaRef.current = onSpineScaleDelta;
   }, [onSpineScaleDelta]);
 
@@ -336,6 +354,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
     let registeredPixiAssetAliases = false;
     let detachCanvasPointers: (() => void) | undefined;
     let detachWheel: (() => void) | undefined;
+    let detachFrameTicker: (() => void) | undefined;
 
     const initPixi = async () => {
       if (!containerRef.current) return;
@@ -544,6 +563,51 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
 
       applyViewRef.current();
       console.log('[SpinePlayer] spine added to stage; pointer pan + scale on Spine; init done');
+
+      let lastFrameEmitKey = '';
+      const onFramesTick = () => {
+        const cb = onAnimationFramesRef.current;
+        if (!cb) return;
+        const spineNow = spineRef.current;
+        if (!spineNow) return;
+        if (playbackTransportRef.current === 'stopped') {
+          if (lastFrameEmitKey !== '—') {
+            lastFrameEmitKey = '—';
+            cb(null);
+          }
+          return;
+        }
+        const track = spineNow.state.tracks[0];
+        if (!track?.animation) {
+          if (lastFrameEmitKey !== '—') {
+            lastFrameEmitKey = '—';
+            cb(null);
+          }
+          return;
+        }
+        const duration = track.animationEnd - track.animationStart;
+        if (duration <= 0) {
+          const key = '1/1';
+          if (key !== lastFrameEmitKey) {
+            lastFrameEmitKey = key;
+            cb({ current: 1, total: 1 });
+          }
+          return;
+        }
+        const local = Math.max(0, track.getAnimationTime() - track.animationStart);
+        const total = Math.max(1, Math.ceil(duration * SPINE_FRAME_COUNTER_FPS));
+        const idx0 = Math.floor(local * SPINE_FRAME_COUNTER_FPS);
+        const current = Math.min(Math.max(1, idx0 + 1), total);
+        const key = `${current}/${total}`;
+        if (key !== lastFrameEmitKey) {
+          lastFrameEmitKey = key;
+          cb({ current, total });
+        }
+      };
+      app.ticker.add(onFramesTick);
+      detachFrameTicker = () => {
+        app.ticker.remove(onFramesTick);
+      };
     };
 
     initPixi().catch((err) => {
@@ -561,6 +625,7 @@ export const Pixi8SpinePlayer: React.FC<Props> = ({
       cancelled = true;
       detachCanvasPointers?.();
       detachWheel?.();
+      detachFrameTicker?.();
       spineRef.current = null;
       if (appRef.current) {
         appRef.current.destroy(true, { children: true, texture: true });
