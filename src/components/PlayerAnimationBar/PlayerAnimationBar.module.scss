@@ -1,0 +1,340 @@
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0;
+  box-sizing: border-box;
+  min-height: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+
+  > .navButton:first-of-type {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: center;
+    justify-self: start;
+    margin-left: 12px;
+  }
+
+  > .navButton:last-of-type {
+    grid-row: 1;
+    grid-column: 3;
+    align-self: center;
+    justify-self: end;
+    margin-right: 12px;
+  }
+
+  > .barBottom {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+    align-self: end;
+  }
+
+  .navButton,
+  .animLabelAnchor {
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}
+
+.barBottom {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background: linear-gradient(
+    to top,
+    rgba(10, 10, 14, 0.92) 0%,
+    rgba(10, 10, 14, 0.78) 55%,
+    rgba(10, 10, 14, 0) 100%
+  );
+  pointer-events: none;
+
+  .animLabelAnchor,
+  .scrubRow,
+  .scrub,
+  .scrubTrack,
+  .scrubRange,
+  .transportButton {
+    pointer-events: auto;
+  }
+}
+
+.barStrip {
+  min-width: 0;
+  width: 100%;
+}
+
+.scrubRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.scrub {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+
+/* Clip name over track top padding; z-index under range so the bar paints on top */
+.scrub .scrubTrack .animLabelAnchor {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-block;
+  width: auto;
+  max-width: calc(100% - 4px);
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+.scrubTrack {
+  /* Used by JS for thumb-center math; keep in sync with ::-webkit-slider-thumb / ::-moz-range-thumb */
+  --player-scrub-thumb-size: 14px;
+
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding-top: 20px;
+}
+
+.thumbLabel {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(58, 58, 70, 0.85);
+  background: rgba(10, 10, 14, 0.92);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: #d8d8e6;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Frame chip: hover on range input only, or while scrub is active */
+.scrubTrack:has(.scrubRange:hover) .thumbLabel,
+.scrubTrack[data-scrub-dragging] .thumbLabel {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumbLabel {
+    transition: none;
+  }
+}
+
+.transportButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid #3a3a46;
+  background: #1c1c24;
+  color: #d8d8e0;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #26262f;
+    border-color: #4a4a58;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* Match SettingsPanel `.playbackButton[aria-pressed='true']` */
+  &[aria-pressed='true'] {
+    background: #094771;
+    border-color: #0078d4;
+    color: #e7e7e7;
+  }
+
+  &:focus-visible {
+    outline: 1px solid #0078d4;
+    outline-offset: 2px;
+  }
+}
+
+.transportIcon {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.scrubRange {
+  --player-scrub-accent: #3b82f6;
+
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  accent-color: var(--player-scrub-accent);
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+      to right,
+      var(--player-scrub-accent) 0,
+      var(--player-scrub-accent) var(--player-scrub-fill-pct, 0%),
+      rgba(255, 255, 255, 0.12) var(--player-scrub-fill-pct, 0%),
+      rgba(255, 255, 255, 0.12) 100%
+    );
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: var(--player-scrub-thumb-size);
+    height: var(--player-scrub-thumb-size);
+    margin-top: calc((4px - var(--player-scrub-thumb-size)) / 2);
+    border-radius: 50%;
+    border: none;
+    background: var(--player-scrub-accent);
+    cursor: pointer;
+  }
+
+  &::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  &::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--player-scrub-accent);
+  }
+
+  &::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--player-scrub-thumb-size);
+    height: var(--player-scrub-thumb-size);
+    border: none;
+    border-radius: 50%;
+    background: var(--player-scrub-accent);
+    cursor: pointer;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--player-scrub-accent);
+    outline-offset: 2px;
+  }
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid #3a3a46;
+  background: #1c1c24;
+  color: #d8d8e0;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #26262f;
+    border-color: #4a4a58;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+}
+
+/* Show ← / → and bottom animation label only while pointer is over the player
+   (touch / coarse: always visible). */
+@media (hover: hover) and (pointer: fine) {
+  :global([data-player]) .root .navButton,
+  :global([data-player]) .root .barBottom {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+  }
+
+  :global([data-player]):hover .root .navButton,
+  :global([data-player]) .root:focus-within .navButton {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  :global([data-player]):hover .root .navButton:disabled,
+  :global([data-player]) .root:focus-within .navButton:disabled {
+    opacity: 0.45;
+  }
+
+  :global([data-player]):hover .root .barBottom,
+  :global([data-player]) .root:focus-within .barBottom {
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global([data-player]) .root .navButton,
+    :global([data-player]) .root .barBottom {
+      transition: none;
+    }
+  }
+}
