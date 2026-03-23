@@ -263,6 +263,18 @@ export default function App() {
     )
   }, [])
 
+  const goAdjacentAnimation = useCallback(
+    (delta: number) => {
+      if (animations.length === 0) return
+      const raw = animation
+      const current = animations.includes(raw) ? raw : animations[0]
+      const idx = animations.indexOf(current)
+      const nextIdx = (idx + delta + animations.length) % animations.length
+      setAnimation(animations[nextIdx])
+    },
+    [animations, animation],
+  )
+
   // While the list is empty (e.g. after Load Spine), avoid passing a stale clip name to the player.
   const selectedAnimation =
     animations.length === 0
@@ -319,6 +331,44 @@ export default function App() {
                 setAnimations(names)
               }}
             />
+            <div
+              className={styles.playerAnimationBar}
+              role="group"
+              aria-label="Canvas animation"
+            >
+              <button
+                type="button"
+                className={styles.playerAnimNavButton}
+                disabled={animations.length === 0}
+                onClick={() => goAdjacentAnimation(-1)}
+                aria-label="Previous animation"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                className={styles.playerAnimNavButton}
+                disabled={animations.length === 0}
+                onClick={() => goAdjacentAnimation(1)}
+                aria-label="Next animation"
+              >
+                →
+              </button>
+              <div className={styles.playerAnimationBarBottom}>
+                <div className={styles.playerAnimationBarStrip}>
+                  <span
+                    className={styles.playerAnimLabel}
+                    title={
+                      animations.length === 0 ? undefined : selectedAnimation
+                    }
+                  >
+                    {animations.length === 0
+                      ? 'Loading…'
+                      : selectedAnimation || '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
