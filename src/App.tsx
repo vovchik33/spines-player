@@ -1,9 +1,11 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
+  type CSSProperties,
   type PointerEvent,
 } from 'react'
 import {
@@ -31,6 +33,32 @@ import styles from './App.module.scss'
 
 const INITIAL_CANVAS_SCALE = 1
 const INITIAL_ANIMATION_SPEED = 1
+
+/** Horizontal center of the range thumb (px from input’s left border). Thumb width must match `--player-scrub-thumb-size` on the track. */
+function rangeThumbCenterXPx(
+  rangeEl: HTMLInputElement,
+  thumbSizePx: number,
+): number {
+  const w = rangeEl.getBoundingClientRect().width
+  if (w <= 0) return 0
+  const thumb =
+    Number.isFinite(thumbSizePx) && thumbSizePx > 0 ? thumbSizePx : 14
+  if (w <= thumb) return w / 2
+  const min = Number(rangeEl.min)
+  const max = Number(rangeEl.max)
+  const val = Number(rangeEl.value)
+  const span = max - min
+  const t = span > 0 ? (val - min) / span : 0
+  return thumb / 2 + t * (w - thumb)
+}
+
+function readScrubThumbSizePx(rangeEl: HTMLInputElement): number {
+  const raw = getComputedStyle(rangeEl)
+    .getPropertyValue('--player-scrub-thumb-size')
+    .trim()
+  const n = parseFloat(raw)
+  return Number.isFinite(n) && n > 0 ? n : 14
+}
 
 type CustomSpinePack = {
   displayName: string
@@ -307,6 +335,8 @@ export default function App() {
   )
 
   const spinePlayerRef = useRef<Pixi8SpinePlayerHandle>(null)
+  const scrubRangeRef = useRef<HTMLInputElement>(null)
+  const scrubThumbLabelRef = useRef<HTMLSpanElement>(null)
   const [playbackProgress1000, setPlaybackProgress1000] = useState(0)
   const [scrubUiValue, setScrubUiValue] = useState(0)
   const scrubDraggingRef = useRef(false)
@@ -399,6 +429,37 @@ export default function App() {
     if (!scrubDraggingRef.current) return
     finishScrubInteraction(lastScrubValue1000Ref.current)
   }
+
+  const scrubValue1000 = scrubDragging ? scrubUiValue : playbackProgress1000
+
+  const scrubRangeStyle = {
+    '--player-scrub-fill-pct': `${scrubValue1000 / 10}%`,
+  } as CSSProperties
+
+  const applyScrubThumbLabelPosition = useCallback(() => {
+    const el = scrubRangeRef.current
+    const label = scrubThumbLabelRef.current
+    if (!el || !label) return
+    const w = el.getBoundingClientRect().width
+    const px = scrubDisabled
+      ? w > 0
+        ? w / 2
+        : 0
+      : rangeThumbCenterXPx(el, readScrubThumbSizePx(el))
+    label.style.left = `${px}px`
+  }, [scrubDisabled])
+
+  useLayoutEffect(() => {
+    applyScrubThumbLabelPosition()
+  }, [scrubValue1000, applyScrubThumbLabelPosition])
+
+  useEffect(() => {
+    const el = scrubRangeRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => applyScrubThumbLabelPosition())
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [applyScrubThumbLabelPosition])
 
   const effectiveDisplayFps = SPINE_FRAME_COUNTER_FPS * animationSpeed
 
@@ -493,34 +554,80 @@ export default function App() {
               </button>
               <div className={styles.playerAnimationBarBottom}>
                 <div className={styles.playerAnimationBarStrip}>
-                  <span
-                    className={styles.playerAnimLabel}
-                    title={
-                      animations.length === 0 ? undefined : selectedAnimation
-                    }
-                  >
-                    {animations.length === 0
-                      ? 'Loading…'
-                      : selectedAnimation || '—'}
-                  </span>
-                  <div className={styles.playerScrub}>
-                    <input
-                      type="range"
-                      className={styles.playerScrubRange}
-                      min={0}
-                      max={1000}
-                      step={1}
+                  <div className={styles.playerScrubRow}>
+                    <button
+                      type="button"
+                      className={styles.playerScrubTransportButton}
                       disabled={scrubDisabled}
-                      value={
-                        scrubDragging ? scrubUiValue : playbackProgress1000
-                      }
-                      aria-label="Animation progress"
-                      onPointerDown={handleScrubPointerDown}
-                      onPointerUp={handleScrubPointerUp}
-                      onPointerCancel={handleScrubPointerUp}
-                      onChange={handleScrubChange}
-                      onBlur={handleScrubBlur}
-                    />
+                      onClick={handlePlay}
+                      aria-label="Play"
+                      aria-pressed={playbackTransport === 'playing'}
+                    >
+                      <svg
+                        className={styles.playerScrubTransportIcon}
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                      >
+                        <path d="M8 5v14l11-7z" fill="currentColor" />
+                      </svg>
+                    </button>
+                    <div className={styles.playerScrub}>
+                      <div className={styles.playerScrubTrack}>
+                        <span
+                          className={styles.playerAnimLabel}
+                          title={
+                            animations.length === 0 ? undefined : selectedAnimation
+                          }
+                        >
+                          {animations.length === 0
+                            ? 'Loading…'
+                            : selectedAnimation || '—'}
+                        </span>
+                        <span
+                          ref={scrubThumbLabelRef}
+                          className={styles.playerScrubThumbLabel}
+                          aria-hidden
+                        >
+                          {animationFrames?.current ?? '—'}
+                        </span>
+                        <input
+                          ref={scrubRangeRef}
+                          type="range"
+                          className={styles.playerScrubRange}
+                          style={scrubRangeStyle}
+                          min={0}
+                          max={1000}
+                          step={1}
+                          disabled={scrubDisabled}
+                          value={scrubValue1000}
+                          aria-label="Animation progress"
+                          onPointerDown={handleScrubPointerDown}
+                          onPointerUp={handleScrubPointerUp}
+                          onPointerCancel={handleScrubPointerUp}
+                          onChange={handleScrubChange}
+                          onBlur={handleScrubBlur}
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.playerScrubTransportButton}
+                      disabled={scrubDisabled}
+                      onClick={handlePause}
+                      aria-label="Pause or resume"
+                      aria-pressed={playbackTransport === 'paused'}
+                    >
+                      <svg
+                        className={styles.playerScrubTransportIcon}
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                      >
+                        <path
+                          d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
