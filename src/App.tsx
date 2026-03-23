@@ -499,26 +499,30 @@ export default function App() {
           </>
         )}
         <main className={styles.player}>
-          <div
+          <button
+            type="button"
             className={`${styles.playerHudChip} ${styles.playerAnimationSpeedFps}`}
             aria-live="polite"
-            aria-label={`Display frame rate about ${effectiveDisplayFps.toFixed(1)} frames per second at ${animationSpeed.toFixed(2)}× animation speed (${SPINE_FRAME_COUNTER_FPS} fps reference)`}
+            aria-label={`Display frame rate about ${effectiveDisplayFps.toFixed(1)} frames per second at ${animationSpeed.toFixed(2)}× animation speed (${SPINE_FRAME_COUNTER_FPS} fps reference). Open settings.`}
+            onClick={() => setSettingsPanelOpen(true)}
           >
             {effectiveDisplayFps.toFixed(1)} fps
-          </div>
-          <div
+          </button>
+          <button
+            type="button"
             className={`${styles.playerHudChip} ${styles.playerFramesCounter}`}
             aria-live="polite"
             aria-label={
               animationFrames
-                ? `Animation frame ${animationFrames.current} of ${animationFrames.total}`
-                : 'Animation frame'
+                ? `Animation frame ${animationFrames.current} of ${animationFrames.total}. Open settings.`
+                : 'Animation frame. Open settings.'
             }
+            onClick={() => setSettingsPanelOpen(true)}
           >
             {animationFrames
               ? `${animationFrames.current} / ${animationFrames.total}`
               : '—'}
-          </div>
+          </button>
           <div className={styles.playerMeasure} data-layout-measure>
             <Pixi8SpinePlayer
               ref={spinePlayerRef}
@@ -604,16 +608,23 @@ export default function App() {
                     </button>
                     <div className={styles.playerScrub}>
                       <div className={styles.playerScrubTrack}>
-                        <span
-                          className={styles.playerAnimLabel}
+                        <button
+                          type="button"
+                          className={`${styles.playerHudChip} ${styles.playerAnimLabel}`}
                           title={
                             animations.length === 0 ? undefined : selectedAnimation
                           }
+                          aria-label={
+                            animations.length === 0
+                              ? 'Loading animations. Open settings.'
+                              : `Animation ${selectedAnimation}. Open settings.`
+                          }
+                          onClick={() => setSettingsPanelOpen(true)}
                         >
                           {animations.length === 0
                             ? 'Loading…'
                             : selectedAnimation || '—'}
-                        </span>
+                        </button>
                         <span
                           ref={scrubThumbLabelRef}
                           className={styles.playerScrubThumbLabel}

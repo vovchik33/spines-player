@@ -79,12 +79,13 @@
   position: absolute;
   top: 8px;
   z-index: 2;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
+  box-sizing: border-box;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  line-height: 1.15;
   letter-spacing: 0.02em;
   color: #c8c8d4;
   background: rgba(10, 10, 14, 0.72);
@@ -93,12 +94,35 @@
   user-select: none;
 }
 
+button.playerHudChip {
+  pointer-events: auto;
+  cursor: pointer;
+  margin: 0;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #c8c8d4;
+  background: rgba(10, 10, 14, 0.72);
+  border: 1px solid rgba(58, 58, 70, 0.65);
+
+  &:focus-visible {
+    outline: 1px solid #3b82f6;
+    outline-offset: 1px;
+  }
+}
+
 .playerAnimationSpeedFps {
-  left: 10px;
+  left: 8px;
 }
 
 .playerFramesCounter {
-  right: 10px;
+  right: 8px;
 }
 
 .playerMeasure {
@@ -198,22 +222,22 @@
   gap: 3px;
 }
 
-/* Clip name sits in the scrub column, directly above the range (progress bar) */
-.playerScrub .playerAnimLabel {
+/* Clip name over track top padding; z-index under range so the bar paints on top */
+.playerScrub .playerScrubTrack button.playerHudChip.playerAnimLabel {
   position: absolute;
-  min-width: 0;
-  margin: auto 0;
-  padding: 0 2px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.15;
   top: 0;
-  width: 100%;
-  color: #a8a8b8;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-block;
+  width: auto;
+  max-width: calc(100% - 4px);
+  min-width: 0;
+  margin: 0;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  z-index: 0;
 }
 
 .playerScrubTrack {
@@ -229,7 +253,7 @@
 .playerScrubThumbLabel {
   position: absolute;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   transform: translateX(-50%);
   padding: 2px 6px;
   border-radius: 3px;
@@ -307,6 +331,8 @@
 .playerScrubRange {
   --player-scrub-accent: #3b82f6;
 
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 14px;
