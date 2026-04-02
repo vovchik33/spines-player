@@ -211,7 +211,7 @@ export function SettingsPanel({
             type="file"
             accept={SPINE_FILE_INPUT_ACCEPT}
             multiple
-            aria-label="Spine files: skeleton, atlas, and texture"
+            aria-label="Spine files: skeleton, atlas, and one or more textures"
             onChange={(e) => {
               // Snapshot before clearing: FileList is live; resetting value empties it.
               const list = e.target.files ? Array.from(e.target.files) : [];
@@ -243,10 +243,10 @@ export function SettingsPanel({
           </div>
           {!hasCustomSpineLoaded ? (
             <p className={styles.loadHint}>
-              Select 3 files: .json or .skel, .atlas, and image (.png / .jpg /
-              .webp). On iPhone, use Files; if .atlas is missing from the short
-              list, open the full browser so every file type is shown; the app
-              still checks names.
+              Select 3+ files: one .json or .skel, one .atlas, and one or more
+              images (.png / .jpg / .webp). On iPhone, use Files; if .atlas is
+              missing from the short list, open the full browser so every file
+              type is shown; the app still checks names.
             </p>
           ) : null}
           {spineLoadError ? (

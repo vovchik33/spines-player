@@ -11,7 +11,7 @@ import { SettingsPanel } from './components/SettingsPanel/SettingsPanel'
 import {
   classifySpineFiles,
   createSpineObjectUrls,
-  getAtlasPageName,
+  getAtlasPageNames,
 } from './utils/loadSpineFiles'
 import {
   SPINE_ANIMATION_SPEED_MAX,
@@ -39,7 +39,7 @@ const SETTINGS_PANEL_HEIGHT_MIN = 280
 
 function getSettingsPanelMaxWidth(): number {
   if (typeof window === 'undefined') return SETTINGS_PANEL_WIDTH_MAX
-  return Math.max(SETTINGS_PANEL_WIDTH_MAX, Math.floor(window.innerWidth * 0.5))
+  return Math.max(SETTINGS_PANEL_WIDTH_MAX, Math.floor(window.innerWidth * 0.8))
 }
 
 function getSettingsPanelDefaultHeight(): number {
@@ -442,19 +442,19 @@ export default function App() {
         )
       }
 
-      const atlasPageName = await getAtlasPageName(r.atlas)
+      const atlasPageNames = await getAtlasPageNames(r.atlas)
       const urls = createSpineObjectUrls({
         skeleton: r.skeleton,
         atlas: r.atlas,
-        texture: r.texture,
-        atlasPageName,
+        textures: r.textures,
+        atlasPageNames,
       })
       const displayName = skeletonFileDisplayName(r.skeleton)
       const next: CustomSpinePack = {
         ...urls,
         displayName,
       }
-      console.log('[App] Load Spine: applying pack', { displayName, atlasPageName })
+      console.log('[App] Load Spine: applying pack', { displayName, atlasPageNames })
       setAnimations([])
       setPlaybackTransport('playing')
       setAnimationLoop(true)
