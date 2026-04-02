@@ -312,18 +312,29 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const isEditableKeyTarget = (target: EventTarget | null) => {
+    const isTextEntryTarget = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return false
-      return Boolean(
-        target.closest(
-          'button, a[href], input:not([type="button"]):not([type="submit"]):not([type="reset"]), textarea, select, [contenteditable="true"]',
-        ),
-      )
+      const el = target.closest('input, textarea, [contenteditable="true"]')
+      if (!el) return false
+      if (el instanceof HTMLTextAreaElement) return true
+      if (el instanceof HTMLInputElement) {
+        const t = (el.type || 'text').toLowerCase()
+        return (
+          t === 'text' ||
+          t === 'search' ||
+          t === 'email' ||
+          t === 'url' ||
+          t === 'tel' ||
+          t === 'password' ||
+          t === 'number'
+        )
+      }
+      return el.getAttribute('contenteditable') === 'true'
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      if (isEditableKeyTarget(e.target)) return
+      if (isTextEntryTarget(e.target)) return
 
       if (e.code === 'KeyP') {
         if (e.repeat) return
@@ -337,23 +348,23 @@ export default function App() {
         return
       }
 
-      // Animation speed: ArrowLeft / ArrowRight (`code` is layout-independent).
-      if (e.code === 'ArrowLeft') {
-        e.preventDefault()
-        setAnimationSpeed((s) =>
-          Math.max(
-            SPINE_ANIMATION_SPEED_MIN,
-            s - SPINE_ANIMATION_SPEED_STEP,
-          ),
-        )
-        return
-      }
-      if (e.code === 'ArrowRight') {
+      // Animation speed: ArrowUp / ArrowDown (`code` is layout-independent).
+      if (e.code === 'ArrowUp') {
         e.preventDefault()
         setAnimationSpeed((s) =>
           Math.min(
             SPINE_ANIMATION_SPEED_MAX,
             s + SPINE_ANIMATION_SPEED_STEP,
+          ),
+        )
+        return
+      }
+      if (e.code === 'ArrowDown') {
+        e.preventDefault()
+        setAnimationSpeed((s) =>
+          Math.max(
+            SPINE_ANIMATION_SPEED_MIN,
+            s - SPINE_ANIMATION_SPEED_STEP,
           ),
         )
         return
@@ -375,14 +386,14 @@ export default function App() {
         return
       }
 
-      if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         const names = animationsRef.current
         if (names.length === 0) return
         e.preventDefault()
         const raw = animationRef.current
         const current = names.includes(raw) ? raw : names[0]
         const idx = names.indexOf(current)
-        const delta = e.code === 'ArrowDown' ? 1 : -1
+        const delta = e.code === 'ArrowRight' ? 1 : -1
         const nextIdx = (idx + delta + names.length) % names.length
         setAnimation(names[nextIdx])
       }

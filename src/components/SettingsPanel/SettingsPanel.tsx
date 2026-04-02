@@ -517,13 +517,13 @@ export function SettingsPanel({
               <strong>P</strong> — pause / play
             </li>
             <li>
-              <strong>↑</strong> <strong>↓</strong> — previous / next animation
+              <strong>↑</strong> <strong>↓</strong> — even slower / faster speed
             </li>
             <li>
               <strong>+</strong> <strong>−</strong> — zoom in/out
             </li>
             <li>
-              <strong>←</strong> <strong>→</strong> — even slower / faster speed
+              <strong>←</strong> <strong>→</strong> — previous / next animation
             </li>
           </ul>
         </div>
