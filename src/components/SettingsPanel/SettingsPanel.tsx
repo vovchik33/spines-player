@@ -161,7 +161,7 @@ export function SettingsPanel({
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
-  const [jsonTreeVisible, setJsonTreeVisible] = useState(true);
+  const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
   const panelStyle = {
     "--settings-panel-width": `${panelWidth}px`,
@@ -517,13 +517,13 @@ export function SettingsPanel({
               <strong>P</strong> — pause / play
             </li>
             <li>
+              <strong>←</strong> <strong>→</strong> — previous / next animation
+            </li>
+            <li>
               <strong>↑</strong> <strong>↓</strong> — even slower / faster speed
             </li>
             <li>
               <strong>+</strong> <strong>−</strong> — zoom in/out
-            </li>
-            <li>
-              <strong>←</strong> <strong>→</strong> — previous / next animation
             </li>
           </ul>
         </div>
