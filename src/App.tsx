@@ -348,6 +348,15 @@ export default function App() {
         return
       }
 
+      if (e.code === 'KeyR') {
+        if (e.repeat) return
+        e.preventDefault()
+        setCanvasScale(INITIAL_CANVAS_SCALE)
+        setAnimationSpeed(INITIAL_ANIMATION_SPEED)
+        setLayoutResetToken((n) => n + 1)
+        return
+      }
+
       // Animation speed: ArrowUp / ArrowDown (`code` is layout-independent).
       if (e.code === 'ArrowUp') {
         e.preventDefault()

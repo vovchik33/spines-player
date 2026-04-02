@@ -514,9 +514,6 @@ export function SettingsPanel({
           <p className={styles.shortcutsTitle}>Keyboard</p>
           <ul className={styles.shortcutsList}>
             <li>
-              <strong>P</strong> — pause / play
-            </li>
-            <li>
               <strong>←</strong> <strong>→</strong> — previous / next animation
             </li>
             <li>
@@ -524,6 +521,12 @@ export function SettingsPanel({
             </li>
             <li>
               <strong>+</strong> <strong>−</strong> — zoom in/out
+            </li>
+            <li>
+              <strong>P</strong> — pause / play
+            </li>
+            <li>
+              <strong>R</strong> — reset position / scale / speed
             </li>
           </ul>
         </div>
