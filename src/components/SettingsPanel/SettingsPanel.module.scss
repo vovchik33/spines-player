@@ -143,17 +143,17 @@
   flex-shrink: 0;
   padding: 5px 12px;
   border-radius: 2px;
-  border: 1px solid var(--settings-border);
-  background: var(--settings-secondary-bg);
-  color: var(--settings-fg);
+  border: 1px solid var(--settings-focus);
+  background: #094771;
+  color: #e7e7e7;
   font: inherit;
   font-size: 13px;
   line-height: 20px;
   cursor: pointer;
 
   &:hover {
-    background: var(--settings-secondary-hover);
-    border-color: #505050;
+    background: #0b5687;
+    border-color: #2c8fe0;
   }
 
   &:focus-visible {
