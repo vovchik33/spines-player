@@ -499,6 +499,7 @@ export default function App() {
               onOpenSettings={() => setSettingsPanelOpen(true)}
               onPlay={handlePlay}
               onPause={handlePause}
+              onStop={handleStop}
               onScrubDraggingChange={setScrubDragging}
             />
           </div>

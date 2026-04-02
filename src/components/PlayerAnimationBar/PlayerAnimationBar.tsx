@@ -57,6 +57,7 @@ export interface PlayerAnimationBarProps {
   onOpenSettings: () => void
   onPlay: () => void
   onPause: () => void
+  onStop: () => void
   onScrubDraggingChange: (dragging: boolean) => void
 }
 
@@ -74,6 +75,7 @@ export function PlayerAnimationBar({
   onOpenSettings,
   onPlay,
   onPause,
+  onStop,
   onScrubDraggingChange,
 }: PlayerAnimationBarProps) {
   const playbackTransportRef = useRef(playbackTransport)
@@ -258,17 +260,32 @@ export function PlayerAnimationBar({
               type="button"
               className={styles.transportButton}
               disabled={scrubDisabled}
-              onClick={onPlay}
-              aria-label="Play"
+              onClick={playbackTransport === 'playing' ? onPause : onPlay}
+              aria-label={
+                playbackTransport === 'playing' ? 'Pause or resume' : 'Play'
+              }
               aria-pressed={playbackTransport === 'playing'}
             >
-              <svg
-                className={styles.transportIcon}
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <path d="M8 5v14l11-7z" fill="currentColor" />
-              </svg>
+              {playbackTransport === 'playing' ? (
+                <svg
+                  className={styles.transportIcon}
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path
+                    d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"
+                    fill="currentColor"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className={styles.transportIcon}
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
+                  <path d="M8 5v14l11-7z" fill="currentColor" />
+                </svg>
+              )}
             </button>
             <div className={styles.scrub}>
               <div
@@ -322,19 +339,16 @@ export function PlayerAnimationBar({
               type="button"
               className={styles.transportButton}
               disabled={scrubDisabled}
-              onClick={onPause}
-              aria-label="Pause or resume"
-              aria-pressed={playbackTransport === 'paused'}
+              onClick={onStop}
+              aria-label="Stop"
+              aria-pressed={playbackTransport === 'stopped'}
             >
               <svg
                 className={styles.transportIcon}
                 viewBox="0 0 24 24"
                 aria-hidden
               >
-                <path
-                  d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"
-                  fill="currentColor"
-                />
+                <rect x="6" y="6" width="12" height="12" fill="currentColor" />
               </svg>
             </button>
           </div>
