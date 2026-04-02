@@ -346,6 +346,13 @@ export function SettingsPanel({
               onClick={onPlay}
               aria-pressed={playbackTransport === "playing"}
             >
+              <svg
+                className={styles.playbackIcon}
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path d="M8 5v14l11-7z" fill="currentColor" />
+              </svg>
               Play
             </button>
             <button
@@ -355,6 +362,13 @@ export function SettingsPanel({
               onClick={onPause}
               aria-pressed={playbackTransport === "paused"}
             >
+              <svg
+                className={styles.playbackIcon}
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor" />
+              </svg>
               Pause
             </button>
             <button
@@ -364,6 +378,13 @@ export function SettingsPanel({
               onClick={onStop}
               aria-pressed={playbackTransport === "stopped"}
             >
+              <svg
+                className={styles.playbackIcon}
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <rect x="6" y="6" width="12" height="12" fill="currentColor" />
+              </svg>
               Stop
             </button>
           </div>

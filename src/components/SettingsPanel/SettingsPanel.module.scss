@@ -289,6 +289,10 @@
 .playbackButton {
   flex: 1;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 5px 8px;
   border-radius: 2px;
   border: 1px solid var(--settings-border);
@@ -319,6 +323,12 @@
     outline: 1px solid var(--settings-focus);
     outline-offset: 2px;
   }
+}
+
+.playbackIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .mutedInline {
