@@ -35,6 +35,11 @@ const SETTINGS_PANEL_WIDTH_MIN = 240
 const SETTINGS_PANEL_WIDTH_MAX = 520
 const SETTINGS_PANEL_WIDTH_DEFAULT = 280
 
+function getSettingsPanelMaxWidth(): number {
+  if (typeof window === 'undefined') return SETTINGS_PANEL_WIDTH_MAX
+  return Math.max(SETTINGS_PANEL_WIDTH_MAX, Math.floor(window.innerWidth * 0.5))
+}
+
 type CustomSpinePack = {
   displayName: string
   skeletonUrl: string
@@ -70,9 +75,10 @@ export default function App() {
     const raw = window.localStorage.getItem(SETTINGS_PANEL_WIDTH_STORAGE_KEY)
     const n = Number(raw)
     if (!Number.isFinite(n)) return SETTINGS_PANEL_WIDTH_DEFAULT
+    const max = getSettingsPanelMaxWidth()
     return Math.max(
       SETTINGS_PANEL_WIDTH_MIN,
-      Math.min(SETTINGS_PANEL_WIDTH_MAX, Math.round(n)),
+      Math.min(max, Math.round(n)),
     )
   })
   const settingsPanelResizeRef = useRef<{
@@ -384,9 +390,10 @@ export default function App() {
     const drag = settingsPanelResizeRef.current
     if (!drag) return
     const delta = clientX - drag.startX
+    const max = getSettingsPanelMaxWidth()
     const next = Math.max(
       SETTINGS_PANEL_WIDTH_MIN,
-      Math.min(SETTINGS_PANEL_WIDTH_MAX, Math.round(drag.startWidth + delta)),
+      Math.min(max, Math.round(drag.startWidth + delta)),
     )
     setSettingsPanelWidth(next)
   }, [])
