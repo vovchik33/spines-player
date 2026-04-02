@@ -30,6 +30,10 @@ const MOBILE_PLAYER_CHROME_HIDE_MS = 5000
 const INITIAL_CANVAS_SCALE = 1
 const INITIAL_ANIMATION_SPEED = 1
 const INITIAL_PLAYER_BACKGROUND_COLOR = '#0a0a0e'
+const SETTINGS_PANEL_WIDTH_STORAGE_KEY = 'spines-player:settings-panel-width'
+const SETTINGS_PANEL_WIDTH_MIN = 240
+const SETTINGS_PANEL_WIDTH_MAX = 520
+const SETTINGS_PANEL_WIDTH_DEFAULT = 280
 
 type CustomSpinePack = {
   displayName: string
@@ -61,6 +65,21 @@ export default function App() {
   const [playbackNonce, setPlaybackNonce] = useState(0)
   const [scrubDragging, setScrubDragging] = useState(false)
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(true)
+  const [settingsPanelWidth, setSettingsPanelWidth] = useState(() => {
+    if (typeof window === 'undefined') return SETTINGS_PANEL_WIDTH_DEFAULT
+    const raw = window.localStorage.getItem(SETTINGS_PANEL_WIDTH_STORAGE_KEY)
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return SETTINGS_PANEL_WIDTH_DEFAULT
+    return Math.max(
+      SETTINGS_PANEL_WIDTH_MIN,
+      Math.min(SETTINGS_PANEL_WIDTH_MAX, Math.round(n)),
+    )
+  })
+  const settingsPanelResizeRef = useRef<{
+    startX: number
+    startWidth: number
+  } | null>(null)
+  const settingsPanelResizePointerIdRef = useRef<number | null>(null)
 
   const [isCoarsePointer, setIsCoarsePointer] = useState(
     () =>
@@ -101,6 +120,13 @@ export default function App() {
   useEffect(() => {
     return () => clearChromeHideTimer()
   }, [clearChromeHideTimer])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      SETTINGS_PANEL_WIDTH_STORAGE_KEY,
+      String(settingsPanelWidth),
+    )
+  }, [settingsPanelWidth])
 
   useEffect(() => {
     if (!isCoarsePointer) {
@@ -344,6 +370,31 @@ export default function App() {
     setAnimationSpeed(INITIAL_ANIMATION_SPEED)
   }, [])
 
+  const handleSettingsResizeStart = useCallback(
+    (clientX: number) => {
+      settingsPanelResizeRef.current = {
+        startX: clientX,
+        startWidth: settingsPanelWidth,
+      }
+    },
+    [settingsPanelWidth],
+  )
+
+  const handleSettingsResizeMove = useCallback((clientX: number) => {
+    const drag = settingsPanelResizeRef.current
+    if (!drag) return
+    const delta = clientX - drag.startX
+    const next = Math.max(
+      SETTINGS_PANEL_WIDTH_MIN,
+      Math.min(SETTINGS_PANEL_WIDTH_MAX, Math.round(drag.startWidth + delta)),
+    )
+    setSettingsPanelWidth(next)
+  }, [])
+
+  const handleSettingsResizeEnd = useCallback(() => {
+    settingsPanelResizeRef.current = null
+  }, [])
+
   const handlePlayerBackgroundImageChange = useCallback((file: File | null) => {
     setPlayerBackgroundImage((prev) => {
       if (prev) {
@@ -477,7 +528,41 @@ export default function App() {
               onLoadSpineFiles={handleLoadSpineFiles}
               spineLoadError={spineLoadError}
               loadedSpineName={loadedSpineName}
+              panelWidth={settingsPanelWidth}
               onClose={() => setSettingsPanelOpen(false)}
+            />
+            <button
+              type="button"
+              className={styles.settingsResizeHandle}
+              aria-label="Resize settings panel"
+              onPointerDown={(e) => {
+                if (e.button !== 0) return
+                settingsPanelResizePointerIdRef.current = e.pointerId
+                e.currentTarget.setPointerCapture(e.pointerId)
+                handleSettingsResizeStart(e.clientX)
+                e.preventDefault()
+              }}
+              onPointerMove={(e) => {
+                if (settingsPanelResizePointerIdRef.current !== e.pointerId) return
+                handleSettingsResizeMove(e.clientX)
+              }}
+              onPointerUp={(e) => {
+                if (settingsPanelResizePointerIdRef.current !== e.pointerId) return
+                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                  e.currentTarget.releasePointerCapture(e.pointerId)
+                }
+                settingsPanelResizePointerIdRef.current = null
+                handleSettingsResizeEnd()
+              }}
+              onPointerCancel={(e) => {
+                if (settingsPanelResizePointerIdRef.current !== e.pointerId) return
+                settingsPanelResizePointerIdRef.current = null
+                handleSettingsResizeEnd()
+              }}
+              onLostPointerCapture={() => {
+                settingsPanelResizePointerIdRef.current = null
+                handleSettingsResizeEnd()
+              }}
             />
           </>
         )}

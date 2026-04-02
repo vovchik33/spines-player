@@ -11,7 +11,11 @@
   --settings-secondary-bg: #3c3c3c;
   --settings-secondary-hover: #4e4e4e;
 
-  flex: 0 0 280px;
+  --settings-panel-width: 280px;
+
+  position: relative;
+  flex: 0 0 var(--settings-panel-width);
+  width: var(--settings-panel-width);
   min-height: 0;
   max-height: 100%;
   align-self: stretch;

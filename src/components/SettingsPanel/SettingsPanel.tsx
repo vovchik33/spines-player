@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, type CSSProperties } from "react";
 import type { SpinePlaybackTransport } from "../SpinePlayer/SpinePlayer";
 import {
   SPINE_ANIMATION_SPEED_MAX,
@@ -79,6 +79,7 @@ export interface SettingsPanelProps {
   spineLoadError?: string | null;
   /** Shown left of the Load Spine control (bundled sample or skeleton file base name). */
   loadedSpineName: string;
+  panelWidth: number;
   /** Hides the settings panel (e.g. mobile); host should offer a way to reopen. */
   onClose: () => void;
 }
@@ -106,14 +107,18 @@ export function SettingsPanel({
   onLoadSpineFiles,
   spineLoadError,
   loadedSpineName,
+  panelWidth,
   onClose,
 }: SettingsPanelProps) {
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
+  const panelStyle = {
+    "--settings-panel-width": `${panelWidth}px`,
+  } as CSSProperties;
 
   return (
-    <aside className={styles.panel} aria-label="Spine configuration">
+    <aside className={styles.panel} style={panelStyle} aria-label="Spine configuration">
       <div className={styles.panelScroll}>
         <div className={styles.loadBlock}>
           <input
