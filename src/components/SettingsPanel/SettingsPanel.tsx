@@ -551,7 +551,7 @@ export function SettingsPanel({
               <strong>+</strong> <strong>−</strong> — zoom in/out
             </li>
             <li>
-              <strong>P</strong> — pause / play
+              <strong>P</strong> or <strong>Space</strong> — pause / play
             </li>
             <li>
               <strong>R</strong> — reset position / scale / speed

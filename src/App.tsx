@@ -358,7 +358,7 @@ export default function App() {
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if (isTextEntryTarget(e.target)) return
 
-      if (e.code === 'KeyP') {
+      if (e.code === 'KeyP' || e.code === 'Space') {
         if (e.repeat) return
         e.preventDefault()
         const prev = playbackTransportRef.current
