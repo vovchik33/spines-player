@@ -380,6 +380,11 @@ export default function App() {
       if (e.code === 'KeyR') {
         if (e.repeat) return
         e.preventDefault()
+        if (e.shiftKey) {
+          setPlayerBackgroundScale(1)
+          setPlayerBackgroundOffset({ x: 0, y: 0 })
+          return
+        }
         setCanvasScale(INITIAL_CANVAS_SCALE)
         setAnimationSpeed(INITIAL_ANIMATION_SPEED)
         setLayoutResetToken((n) => n + 1)

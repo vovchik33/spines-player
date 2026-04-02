@@ -539,6 +539,9 @@ export function SettingsPanel({
           <p className={styles.shortcutsTitle}>Keyboard</p>
           <ul className={styles.shortcutsList}>
             <li>
+              <strong>S</strong> — show / hide settings
+            </li>
+            <li>
               <strong>←</strong> <strong>→</strong> — previous / next animation
             </li>
             <li>
@@ -554,8 +557,9 @@ export function SettingsPanel({
               <strong>R</strong> — reset position / scale / speed
             </li>
             <li>
-              <strong>S</strong> — show / hide settings
+              <strong>Shift</strong> + <strong>R</strong> — reset background position / scale
             </li>
+
           </ul>
         </div>
       </div>
