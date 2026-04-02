@@ -458,7 +458,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       const height = Math.max(1, Math.floor(layoutEl.clientHeight));
       console.log('[SpinePlayer] layout measure', { width, height });
 
-      // 1. Pixi Application — initial size from layout; ResizeObserver keeps canvas in sync later.
+      // 1. Pixi Application — initial size from layout; ResizeObserver + post-load sync keep it correct.
       const app = new Application();
       await app.init({
         width,
@@ -747,6 +747,21 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       };
 
       applyViewRef.current();
+
+      // Long async load: flex layout may settle after the first measure; RO won’t fire if size is unchanged.
+      const syncCanvasToLayout = () => {
+        if (cancelled) return;
+        const a = appRef.current;
+        const hostEl = containerRef.current;
+        if (!a || !hostEl) return;
+        const el = getLayoutElement(hostEl);
+        const w = Math.max(1, Math.floor(el.clientWidth));
+        const h = Math.max(1, Math.floor(el.clientHeight));
+        a.renderer.resize(w, h);
+        applyViewRef.current();
+      };
+      requestAnimationFrame(() => requestAnimationFrame(syncCanvasToLayout));
+
       console.log(
         '[SpinePlayer] spine added to stage; pointer pan, pinch scale (2 touches), wheel scale',
       );
@@ -888,6 +903,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
     );
   }, [animation, playbackTransport, animationLoop, playbackNonce, animationSpeed]);
 
+  // Re-run when spine URLs change: init is async, so an early scheduleResize may no-op before appRef exists.
   useEffect(() => {
     const host = containerRef.current;
     if (!host) return;
@@ -919,7 +935,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       if (raf) cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, []);
+  }, [skeletonUrl, atlasUrl]);
 
   return <div ref={containerRef} className={styles.host} />;
 });
