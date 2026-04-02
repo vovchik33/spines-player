@@ -113,6 +113,7 @@ export interface SettingsPanelProps {
   spineLoadError?: string | null;
   /** Shown left of the Load Spine control (bundled sample or skeleton file base name). */
   loadedSpineName: string;
+  hasCustomSpineLoaded: boolean;
   spineJsonRoot: Record<string, unknown> | null;
   spineJsonError: string | null;
   panelWidth: number;
@@ -147,6 +148,7 @@ export function SettingsPanel({
   onLoadSpineFiles,
   spineLoadError,
   loadedSpineName,
+  hasCustomSpineLoaded,
   spineJsonRoot,
   spineJsonError,
   panelWidth,
@@ -236,15 +238,17 @@ export function SettingsPanel({
               className={styles.loadButton}
               onClick={() => spineFileInputRef.current?.click()}
             >
-              Choose…
+              Open...
             </button>
           </div>
-          <p className={styles.loadHint}>
-            Select 3 files: .json or .skel, .atlas, and image (.png / .jpg /
-            .webp). On iPhone, use Files; if .atlas is missing from the short
-            list, open the full browser so every file type is shown; the app
-            still checks names.
-          </p>
+          {!hasCustomSpineLoaded ? (
+            <p className={styles.loadHint}>
+              Select 3 files: .json or .skel, .atlas, and image (.png / .jpg /
+              .webp). On iPhone, use Files; if .atlas is missing from the short
+              list, open the full browser so every file type is shown; the app
+              still checks names.
+            </p>
+          ) : null}
           {spineLoadError ? (
             <p className={styles.loadError} role="alert">
               {spineLoadError}

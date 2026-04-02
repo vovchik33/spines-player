@@ -650,6 +650,7 @@ export default function App() {
               onLoadSpineFiles={handleLoadSpineFiles}
               spineLoadError={spineLoadError}
               loadedSpineName={loadedSpineName}
+              hasCustomSpineLoaded={customSpine !== null}
               spineJsonRoot={spineJsonRoot}
               spineJsonError={spineJsonError}
               panelWidth={settingsPanelWidth}
