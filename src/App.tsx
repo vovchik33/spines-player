@@ -29,6 +29,7 @@ const MOBILE_PLAYER_CHROME_HIDE_MS = 5000
 
 const INITIAL_CANVAS_SCALE = 1
 const INITIAL_ANIMATION_SPEED = 1
+const INITIAL_PLAYER_BACKGROUND_COLOR = '#0a0a0e'
 
 type CustomSpinePack = {
   displayName: string
@@ -36,6 +37,11 @@ type CustomSpinePack = {
   atlasUrl: string
   atlasImageMap: Record<string, string>
   revoke: () => void
+}
+
+type PlayerBackgroundImage = {
+  name: string
+  url: string
 }
 
 function skeletonFileDisplayName(file: File): string {
@@ -166,15 +172,25 @@ export default function App() {
 
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
   const [animationSpeed, setAnimationSpeed] = useState(INITIAL_ANIMATION_SPEED)
+  const [playerBackgroundColor, setPlayerBackgroundColor] = useState(
+    INITIAL_PLAYER_BACKGROUND_COLOR,
+  )
+  const [playerBackgroundImage, setPlayerBackgroundImage] =
+    useState<PlayerBackgroundImage | null>(null)
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
   const [spineLoadError, setSpineLoadError] = useState<string | null>(null)
 
   const customSpineRef = useRef<CustomSpinePack | null>(null)
+  const playerBackgroundImageUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
     customSpineRef.current = customSpine
   }, [customSpine])
+
+  useEffect(() => {
+    playerBackgroundImageUrlRef.current = playerBackgroundImage?.url ?? null
+  }, [playerBackgroundImage])
 
   useEffect(() => {
     return () => {
@@ -182,6 +198,15 @@ export default function App() {
         console.log('[App] unmount: revoke custom spine object URLs')
       }
       customSpineRef.current?.revoke()
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      const imageUrl = playerBackgroundImageUrlRef.current
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl)
+      }
     }
   }, [])
 
@@ -319,6 +344,24 @@ export default function App() {
     setAnimationSpeed(INITIAL_ANIMATION_SPEED)
   }, [])
 
+  const handlePlayerBackgroundImageChange = useCallback((file: File | null) => {
+    setPlayerBackgroundImage((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev.url)
+      }
+      if (!file) return null
+      if (!file.type.startsWith('image/')) {
+        console.warn('[App] Background image rejected: not an image file', {
+          name: file.name,
+          type: file.type,
+        })
+        return null
+      }
+      const url = URL.createObjectURL(file)
+      return { name: file.name, url }
+    })
+  }, [])
+
   const applySpineScaleDelta = useCallback((delta: number) => {
     setCanvasScale((s) =>
       Math.min(
@@ -426,6 +469,10 @@ export default function App() {
               animationSpeed={animationSpeed}
               onAnimationSpeedChange={setAnimationSpeed}
               onResetAnimationSpeed={resetAnimationSpeed}
+              playerBackgroundColor={playerBackgroundColor}
+              onPlayerBackgroundColorChange={setPlayerBackgroundColor}
+              playerBackgroundImageName={playerBackgroundImage?.name ?? null}
+              onPlayerBackgroundImageChange={handlePlayerBackgroundImageChange}
               onResetLayout={resetLayout}
               onLoadSpineFiles={handleLoadSpineFiles}
               spineLoadError={spineLoadError}
@@ -440,6 +487,15 @@ export default function App() {
               ? ` ${styles.playerTouchChromeHidden}`
               : ''
           }`}
+          style={{
+            backgroundColor: playerBackgroundColor,
+            backgroundImage: playerBackgroundImage
+              ? `url("${playerBackgroundImage.url}")`
+              : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
           data-player
           onPointerDownCapture={bumpPlayerChrome}
         >

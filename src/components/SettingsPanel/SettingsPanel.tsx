@@ -70,6 +70,10 @@ export interface SettingsPanelProps {
   animationSpeed: number;
   onAnimationSpeedChange: (speed: number) => void;
   onResetAnimationSpeed: () => void;
+  playerBackgroundColor: string;
+  onPlayerBackgroundColorChange: (color: string) => void;
+  playerBackgroundImageName: string | null;
+  onPlayerBackgroundImageChange: (file: File | null) => void;
   onResetLayout: () => void;
   onLoadSpineFiles?: (files: File[]) => void;
   spineLoadError?: string | null;
@@ -94,6 +98,10 @@ export function SettingsPanel({
   animationSpeed,
   onAnimationSpeedChange,
   onResetAnimationSpeed,
+  playerBackgroundColor,
+  onPlayerBackgroundColorChange,
+  playerBackgroundImageName,
+  onPlayerBackgroundImageChange,
   onResetLayout,
   onLoadSpineFiles,
   spineLoadError,
@@ -101,6 +109,7 @@ export function SettingsPanel({
   onClose,
 }: SettingsPanelProps) {
   const spineFileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
 
   return (
@@ -284,6 +293,60 @@ export function SettingsPanel({
             onChange={(e) => onAnimationSpeedChange(Number(e.target.value))}
             {...rangeReleaseFocusProps}
           />
+        </div>
+        <div className={styles.field}>
+          <div className={styles.colorRow}>
+            <label className={styles.label}>
+              Background
+            </label>
+          </div>
+          <input
+            ref={backgroundImageInputRef}
+            className={styles.fileInput}
+            type="file"
+            accept="image/*"
+            aria-label="Choose background image"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              e.target.value = "";
+              onPlayerBackgroundImageChange(file);
+            }}
+          />
+          <div className={styles.backgroundImageRow}>
+            <span
+              className={styles.backgroundImageName}
+              title={playerBackgroundImageName ?? "No image selected"}
+              aria-live="polite"
+            >
+              {playerBackgroundImageName ?? "No image selected"}
+            </span>
+            <div className={styles.backgroundImageActions}>
+              <button
+                type="button"
+                className={styles.resetButton}
+                onClick={() => backgroundImageInputRef.current?.click()}
+              >
+                ...
+              </button>
+              <button
+                type="button"
+                className={styles.resetButton}
+                disabled={!playerBackgroundImageName}
+                onClick={() => onPlayerBackgroundImageChange(null)}
+              >
+                Clear
+              </button>
+              <input
+                id="background-color-input"
+                className={styles.colorInput}
+                type="color"
+                value={playerBackgroundColor}
+                aria-label="Player background color"
+                onChange={(e) => onPlayerBackgroundColorChange(e.target.value)}
+                {...rangeReleaseFocusProps}
+              />
+            </div>
+          </div>
         </div>
         <div className={styles.shortcutsBlock}>
           <p className={styles.shortcutsTitle}>Mouse</p>
