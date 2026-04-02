@@ -43,6 +43,21 @@ function readScrubThumbSizePx(rangeEl: HTMLInputElement): number {
   return Number.isFinite(n) && n > 0 ? n : 14
 }
 
+function rangeValueFromPointerClientX(
+  rangeEl: HTMLInputElement,
+  clientX: number,
+): number {
+  const rect = rangeEl.getBoundingClientRect()
+  const min = Number(rangeEl.min)
+  const max = Number(rangeEl.max)
+  if (rect.width <= 0 || !Number.isFinite(min) || !Number.isFinite(max)) {
+    return Number(rangeEl.value)
+  }
+  const t = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+  const raw = min + t * (max - min)
+  return Number.isFinite(raw) ? raw : Number(rangeEl.value)
+}
+
 export interface PlayerAnimationBarProps {
   spinePlayerRef: RefObject<Pixi8SpinePlayerHandle | null>
   animations: string[]
@@ -134,7 +149,8 @@ export function PlayerAnimationBar({
     scrubDraggingRef.current = true
     setScrubDragging(true)
     const target = e.currentTarget
-    const nextValue = Number(target.value)
+    const nextValue = rangeValueFromPointerClientX(target, e.clientX)
+    target.value = String(Math.round(nextValue))
     target.setPointerCapture(e.pointerId)
     requestAnimationFrame(() => applyScrubValue(nextValue))
   }
