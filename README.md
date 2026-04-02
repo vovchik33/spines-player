@@ -1,6 +1,8 @@
 # spines-player
 
-Web viewer for [Spine](http://esotericsoftware.com/) skeletal animations: load exported skeleton + atlas + texture, pick clips, control playback, scale, and speed. Built with **React**, **Pixi.js v8**, and **@esotericsoftware/spine-pixi-v8**.
+Web viewer for [Spine](http://esotericsoftware.com/) skeletal animations: load skeleton data, atlas, and one or more atlas page images; then preview clips, playback, scale, speed, and background transforms.
+
+Built with **React**, **Pixi.js v8**, and **@esotericsoftware/spine-pixi-v8**.
 
 ## Requirements
 
@@ -8,87 +10,120 @@ Web viewer for [Spine](http://esotericsoftware.com/) skeletal animations: load e
 
 ## Scripts
 
-| Command        | Description                          |
-| -------------- | ------------------------------------ |
-| `npm run dev`  | Vite dev server with HMR             |
-| `npm run build`| TypeScript check + production bundle   |
-| `npm run preview` | Serve the `dist` build after build |
-| `npm run lint` | ESLint                               |
+
+| Command           | Description                         |
+| ----------------- | ----------------------------------- |
+| `npm run dev`     | Vite dev server with HMR            |
+| `npm run build`   | TypeScript check + production build |
+| `npm run preview` | Serve built `dist/` output          |
+| `npm run lint`    | ESLint                              |
+
 
 ## Layout
 
-- **Left:** configuration panel (scrolls when content is tall; scrollbar is hidden but wheel / trackpad still scrolls).
-- **Right:** Pixi canvas showing the Spine character. **Drag** with the pointer to **pan** the skeleton inside the view.
+- **Settings panel** on the left (desktop) or bottom sheet (tall/narrow screens).
+- **Player area** on the right with the Spine canvas and HUD chips.
+- Settings panel is resizable:
+  - horizontal drag handle on desktop
+  - top drag handle in bottom-sheet mode
 
-## Loading a Spine
+## Loading Spine files
 
-1. Click **Choose…** and select **exactly three** files in one go:
-   - **Skeleton:** `.json` or `.skel`
-   - **Atlas:** `.atlas`
-   - **Texture:** `.png`, `.jpg`, `.jpeg`, or `.webp` (must match the atlas page name)
+Use **Open...** in settings and select files in one pick:
 
-2. The panel shows the current asset name (bundled sample **Cat** until you load your own).
+- exactly one skeleton: `.json` or `.skel`
+- exactly one atlas: `.atlas`
+- one or more textures: `.png`, `.jpg`, `.jpeg`, `.webp`
 
-3. If the selection is invalid, an error message explains what is wrong.
+Multi-page atlases are supported (atlas page names are matched to selected images).
 
-Loading a new pack **resets** spine **scale**, **animation speed**, and starts playback in **loop** at **1×** speed. It does **not** run the full **Reset** (see below).
+If the selection is invalid, the panel shows an error with details.
+
+When a new pack is loaded, the app resets:
+
+- Spine scale to default
+- animation speed to `1x`
+- playback loop enabled and transport set to playing
 
 ## Default sample
 
-If you do not load custom files, the app uses the bundled **Cat** skeleton from `public/spines/cat/` (paths respect Vite `base`).
+If no custom files are loaded, the app uses bundled **Cat** assets from `public/spines/cat/` (resolved through Vite `base`).
 
-## Animation list & playback
+## Playback and animation controls
 
-- **Animation** dropdown lists all clips from the skeleton. After you pick one, the dropdown **blurs** so global shortcuts work without an extra click.
-- **Play** — starts or **restarts** the current clip (from pause or from stop, or replay while already playing). **Resume** from pause does **not** restart the timeline.
-- **Pause** — freezes the clip (`timeScale` 0); press again to **resume** from the same frame (**toggle**, same idea as **P**).
-- **Stop** — same as **Pause**, but seeks the current clip to the **first frame** (track stays active; not setup pose).
-- **Loop animation** — when checked, the active track loops; when unchecked, it plays **once** (then stops at the end unless you change mode).
+- **Animation** dropdown lists clips from the loaded skeleton.
+- **Play** restarts or starts current clip.
+- **Pause** toggles paused/playing state.
+- **Stop** seeks current clip to first frame and stops playback.
+- **Loop animation** toggles loop mode for track 0.
 
-## Spine scale
+## Scale and speed
 
-- **Slider:** **0.1×** … **3×**, step **0.05**.
-- **Reset** (next to the slider) also resets **animation speed** to **1×**, **clears pan**, and triggers a layout remeasure for the renderer.
+- Spine scale: `0.1x` to `3x` (step `0.05`)
+- Animation speed: `0.1x` to `3x` (step `0.05`)
 
-## Animation speed
+Reset buttons:
 
-Controls Spine `AnimationState.timeScale` while **playing** (paused stays frozen; stopped ignores speed until you play again).
+- **Spine scale Reset**: resets spine scale + pan/layout transform
+- **Animation speed Reset**: resets only animation speed to `1x`
 
-- **Slider:** **0.1×** … **3×**, step **0.05**.
-- **Reset** (next to the speed slider) sets speed to **1×** only (does not change scale or pan).
+## Background controls
+
+- Background color picker
+- Background image selection/clear
+- `Shift + wheel` in player: zoom background
+- `Shift + drag` in player: move background
+- `Shift + R`: reset background position and scale
+- Selecting a new background image resets its position/scale to defaults
+
+## Spine info section
+
+Settings include a **Spine info** block:
+
+- Top-level sections from skeleton JSON
+- name-only listing for `bones`, `slots`, `skins`, `animations`
+- raw JSON view for `skeleton` and `transform`
+- Show/Hide toggle for the entire info block
 
 ## Keyboard shortcuts
 
-Shortcuts are ignored while focus is in a **button**, **link**, **text field**, **range slider**, **`select`**, **`textarea`**, or **`contenteditable`**. They use physical **`KeyboardEvent.code`** where noted so layout (e.g. QWERTY vs other) does not change bindings.
+Shortcuts are ignored in text-entry contexts (`input` text types, `textarea`, `contenteditable`), and use `KeyboardEvent.code` bindings.
 
-| Action | Keys |
-| ------ | ---- |
-| Pause / play toggle | **P** (no repeat; **Ctrl / Cmd / Alt** not used) |
-| Previous / next animation (dropdown order, wraps) | **Arrow Up** / **Arrow Down** |
-| Decrease / increase animation speed | **Arrow Left** / **Arrow Right** |
-| Decrease / increase spine scale | **Minus** or **NumpadSubtract** / **Equal** or **NumpadAdd** (`=` and `+` share the **Equal** key) |
 
-**Range sliders:** after pointer **up** or **cancel**, the control **blurs**. **Escape** blurs a focused slider for keyboard users.
+| Action                               | Keys                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| Show / hide settings panel           | **S**                                                        |
+| Pause / play toggle                  | **P** or **Space**                                           |
+| Previous / next animation            | **Arrow Left** / **Arrow Right**                             |
+| Decrease / increase animation speed  | **Arrow Down** / **Arrow Up**                                |
+| Decrease / increase spine scale      | **Minus** or **NumpadSubtract** / **Equal** or **NumpadAdd** |
+| Reset spine position / scale / speed | **R**                                                        |
+| Reset background position / scale    | **Shift + R**                                                |
 
-## Mouse wheel on the canvas
 
-| Gesture | Effect |
-| ------- | ------ |
-| Wheel (no modifiers) | **Zoom** spine display (same idea as the scale slider; clamped **0.1×–3×**). |
-| **Shift** + wheel | **Animation speed** up/down (same step family as the slider, clamped **0.1×–3×**). Uses the larger of **\|deltaX\|** vs **\|deltaY\|** so **Shift** + vertical scroll still works when the browser maps it to horizontal delta. |
+## Mouse gestures in player
 
-Wheel handler uses **non-passive** `preventDefault` where it handles the event so the page does not scroll instead.
+
+| Gesture       | Effect          |
+| ------------- | --------------- |
+| Drag          | Pan Spine       |
+| Wheel         | Spine zoom      |
+| Shift + wheel | Background zoom |
+| Shift + drag  | Background move |
+
 
 ## Stack
 
-- **React** + **TypeScript** + **Vite**
-- **pixi.js** 8.x, **@esotericsoftware/spine-pixi-v8** (Spine 4.2 runtime for Pixi v8)
-- **Sass** for component styles
+- React + TypeScript + Vite
+- pixi.js 8.x
+- @esotericsoftware/spine-pixi-v8 (Spine 4.2 runtime for Pixi v8)
+- Sass modules
 
-## Project structure (high level)
+## High-level structure
 
-- `src/App.tsx` — app state, shortcuts, load pipeline, passes props to panel + player.
-- `src/components/SettingsPanel/` — file load UI, animation select, playback, sliders.
-- `src/components/SpinePlayer/SpinePlayer.tsx` — Pixi app, Spine instance, pan, wheel zoom / speed, sync with React props.
-- `src/utils/loadSpineFiles.ts` — classify three picked files, object URLs for blobs.
-- `src/utils/spineViewScale.ts` — shared min/max/step for scale and animation speed (sliders, wheel, keyboard).
+- `src/App.tsx` - app state, loading pipeline, shortcuts, panel/player wiring
+- `src/components/SettingsPanel/` - file loading UI, playback controls, sliders, info section
+- `src/components/SpinePlayer/SpinePlayer.tsx` - Pixi runtime, Spine instance, canvas interaction
+- `src/utils/loadSpineFiles.ts` - file classification, atlas page parsing, object URL mapping
+- `src/utils/spineViewScale.ts` - shared scale/speed min/max/step constants
+
