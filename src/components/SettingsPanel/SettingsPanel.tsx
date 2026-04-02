@@ -506,10 +506,13 @@ export function SettingsPanel({
           <p className={styles.shortcutsTitle}>Mouse</p>
           <ul className={styles.shortcutsList}>
             <li>
-              <strong>Wheel</strong> — zoom in/out
+              <strong>Wheel</strong> — spine zoom in/out
             </li>
             <li>
-              <strong>Shift</strong> + wheel — change animation speed
+              <strong>Shift</strong> + wheel — background zoom in/out
+            </li>
+            <li>
+              <strong>Shift</strong> + drag — move background
             </li>
           </ul>
           <p className={styles.shortcutsTitle}>Keyboard</p>

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+} from 'react'
 import {
   Pixi8SpinePlayer,
   SPINE_FRAME_COUNTER_FPS,
@@ -30,6 +37,8 @@ const MOBILE_PLAYER_CHROME_HIDE_MS = 5000
 const INITIAL_CANVAS_SCALE = 1
 const INITIAL_ANIMATION_SPEED = 1
 const INITIAL_PLAYER_BACKGROUND_COLOR = '#0a0a0e'
+const PLAYER_BACKGROUND_SCALE_MIN = 0.5
+const PLAYER_BACKGROUND_SCALE_MAX = 4
 const SETTINGS_PANEL_WIDTH_STORAGE_KEY = 'spines-player:settings-panel-width'
 const SETTINGS_PANEL_WIDTH_MIN = 240
 const SETTINGS_PANEL_WIDTH_MAX = 520
@@ -245,6 +254,11 @@ export default function App() {
   )
   const [playerBackgroundImage, setPlayerBackgroundImage] =
     useState<PlayerBackgroundImage | null>(null)
+  const [playerBackgroundScale, setPlayerBackgroundScale] = useState(1)
+  const [playerBackgroundOffset, setPlayerBackgroundOffset] = useState({
+    x: 0,
+    y: 0,
+  })
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
   const [spineLoadError, setSpineLoadError] = useState<string | null>(null)
@@ -255,6 +269,14 @@ export default function App() {
 
   const customSpineRef = useRef<CustomSpinePack | null>(null)
   const playerBackgroundImageUrlRef = useRef<string | null>(null)
+  const playerBackgroundDragRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    startOffsetX: number
+    startOffsetY: number
+  } | null>(null)
+  const [playerBackgroundDragging, setPlayerBackgroundDragging] = useState(false)
 
   useEffect(() => {
     customSpineRef.current = customSpine
@@ -545,6 +567,8 @@ export default function App() {
   }, [])
 
   const handlePlayerBackgroundImageChange = useCallback((file: File | null) => {
+    setPlayerBackgroundScale(1)
+    setPlayerBackgroundOffset({ x: 0, y: 0 })
     setPlayerBackgroundImage((prev) => {
       if (prev) {
         URL.revokeObjectURL(prev.url)
@@ -560,6 +584,65 @@ export default function App() {
       const url = URL.createObjectURL(file)
       return { name: file.name, url }
     })
+  }, [])
+
+  const handlePlayerWheelCapture = useCallback(
+    (e: ReactWheelEvent<HTMLElement>) => {
+      if (!playerBackgroundImage || !e.shiftKey) return
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+      if (delta === 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      bumpPlayerChrome()
+      const factor = Math.exp(-delta * 0.0015)
+      setPlayerBackgroundScale((s) =>
+        Math.min(
+          PLAYER_BACKGROUND_SCALE_MAX,
+          Math.max(PLAYER_BACKGROUND_SCALE_MIN, s * factor),
+        ),
+      )
+    },
+    [playerBackgroundImage, bumpPlayerChrome],
+  )
+
+  const handlePlayerPointerDownCapture = useCallback(
+    (e: ReactPointerEvent<HTMLElement>) => {
+      bumpPlayerChrome()
+      if (!playerBackgroundImage || !e.shiftKey || e.button !== 0) return
+      playerBackgroundDragRef.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startOffsetX: playerBackgroundOffset.x,
+        startOffsetY: playerBackgroundOffset.y,
+      }
+      setPlayerBackgroundDragging(true)
+      e.currentTarget.setPointerCapture(e.pointerId)
+      e.preventDefault()
+      e.stopPropagation()
+    },
+    [bumpPlayerChrome, playerBackgroundImage, playerBackgroundOffset],
+  )
+
+  const handlePlayerPointerMoveCapture = useCallback(
+    (e: ReactPointerEvent<HTMLElement>) => {
+      const drag = playerBackgroundDragRef.current
+      if (!drag || drag.pointerId !== e.pointerId) return
+      const dx = e.clientX - drag.startX
+      const dy = e.clientY - drag.startY
+      setPlayerBackgroundOffset({
+        x: drag.startOffsetX + dx,
+        y: drag.startOffsetY + dy,
+      })
+      e.preventDefault()
+      e.stopPropagation()
+    },
+    [],
+  )
+
+  const endPlayerBackgroundDrag = useCallback(() => {
+    playerBackgroundDragRef.current = null
+    setPlayerBackgroundDragging(false)
   }, [])
 
   const applySpineScaleDelta = useCallback((delta: number) => {
@@ -733,12 +816,33 @@ export default function App() {
             backgroundImage: playerBackgroundImage
               ? `url("${playerBackgroundImage.url}")`
               : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundSize: playerBackgroundImage
+              ? `${(playerBackgroundScale * 100).toFixed(2)}%`
+              : undefined,
+            backgroundPosition: playerBackgroundImage
+              ? `calc(50% + ${playerBackgroundOffset.x}px) calc(50% + ${playerBackgroundOffset.y}px)`
+              : undefined,
             backgroundRepeat: 'no-repeat',
+            cursor: playerBackgroundDragging ? 'grabbing' : undefined,
           }}
           data-player
-          onPointerDownCapture={bumpPlayerChrome}
+          onWheelCapture={handlePlayerWheelCapture}
+          onPointerDownCapture={handlePlayerPointerDownCapture}
+          onPointerMoveCapture={handlePlayerPointerMoveCapture}
+          onPointerUpCapture={(e) => {
+            const drag = playerBackgroundDragRef.current
+            if (!drag || drag.pointerId !== e.pointerId) return
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+              e.currentTarget.releasePointerCapture(e.pointerId)
+            }
+            endPlayerBackgroundDrag()
+          }}
+          onPointerCancelCapture={(e) => {
+            const drag = playerBackgroundDragRef.current
+            if (!drag || drag.pointerId !== e.pointerId) return
+            endPlayerBackgroundDrag()
+          }}
+          onLostPointerCapture={() => endPlayerBackgroundDrag()}
         >
           <button
             type="button"
