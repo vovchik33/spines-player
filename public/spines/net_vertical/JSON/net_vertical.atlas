@@ -1,0 +1,13 @@
+net_vertical.png
+size:1307,1245
+filter:Linear,Linear
+pma:true
+net_2
+bounds:2,2,1303,1241
+
+net_vertical_2.png
+size:1296,1260
+filter:Linear,Linear
+pma:true
+net_1
+bounds:2,2,1292,1256

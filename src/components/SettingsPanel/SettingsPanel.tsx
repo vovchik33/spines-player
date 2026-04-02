@@ -241,14 +241,6 @@ export function SettingsPanel({
               Open...
             </button>
           </div>
-          {!hasCustomSpineLoaded ? (
-            <p className={styles.loadHint}>
-              Select 3+ files: one .json or .skel, one .atlas, and one or more
-              images (.png / .jpg / .webp). On iPhone, use Files; if .atlas is
-              missing from the short list, open the full browser so every file
-              type is shown; the app still checks names.
-            </p>
-          ) : null}
           {spineLoadError ? (
             <p className={styles.loadError} role="alert">
               {spineLoadError}
@@ -502,6 +494,15 @@ export function SettingsPanel({
           </div>
         </div>
         <div className={styles.shortcutsBlock}>
+          {!hasCustomSpineLoaded ? (
+            <p className={styles.loadHint}>
+              Select at least 3 files: one .json or .skel file, one .atlas
+              file, and one or more image files (.png / .jpg / .webp). On
+              iPhone, use the Files app; if .atlas is missing from the short
+              list, open the full file browser so all file types are visible.
+              The app still validates file names.
+            </p>
+          ) : null}
           <p className={styles.shortcutsTitle}>Mouse</p>
           <ul className={styles.shortcutsList}>
             <li>
@@ -527,6 +528,9 @@ export function SettingsPanel({
             </li>
             <li>
               <strong>R</strong> — reset position / scale / speed
+            </li>
+            <li>
+              <strong>S</strong> — show / hide settings
             </li>
           </ul>
         </div>

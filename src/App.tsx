@@ -348,6 +348,13 @@ export default function App() {
         return
       }
 
+      if (e.code === 'KeyS') {
+        if (e.repeat) return
+        e.preventDefault()
+        setSettingsPanelOpen((v) => !v)
+        return
+      }
+
       if (e.code === 'KeyR') {
         if (e.repeat) return
         e.preventDefault()
