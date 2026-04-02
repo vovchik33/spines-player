@@ -80,6 +80,10 @@ export interface SettingsPanelProps {
   /** Shown left of the Load Spine control (bundled sample or skeleton file base name). */
   loadedSpineName: string;
   panelWidth: number;
+  panelHeight: number;
+  onVerticalResizeStart: (clientY: number) => void;
+  onVerticalResizeMove: (clientY: number) => void;
+  onVerticalResizeEnd: () => void;
   /** Hides the settings panel (e.g. mobile); host should offer a way to reopen. */
   onClose: () => void;
 }
@@ -108,17 +112,56 @@ export function SettingsPanel({
   spineLoadError,
   loadedSpineName,
   panelWidth,
+  panelHeight,
+  onVerticalResizeStart,
+  onVerticalResizeMove,
+  onVerticalResizeEnd,
   onClose,
 }: SettingsPanelProps) {
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
+  const verticalResizePointerIdRef = useRef<number | null>(null);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
   const panelStyle = {
     "--settings-panel-width": `${panelWidth}px`,
+    "--settings-panel-height": `${panelHeight}px`,
   } as CSSProperties;
 
   return (
     <aside className={styles.panel} style={panelStyle} aria-label="Spine configuration">
+      <button
+        type="button"
+        className={styles.topResizeHandle}
+        aria-label="Resize settings panel height"
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          verticalResizePointerIdRef.current = e.pointerId;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          onVerticalResizeStart(e.clientY);
+          e.preventDefault();
+        }}
+        onPointerMove={(e) => {
+          if (verticalResizePointerIdRef.current !== e.pointerId) return;
+          onVerticalResizeMove(e.clientY);
+        }}
+        onPointerUp={(e) => {
+          if (verticalResizePointerIdRef.current !== e.pointerId) return;
+          if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+          }
+          verticalResizePointerIdRef.current = null;
+          onVerticalResizeEnd();
+        }}
+        onPointerCancel={(e) => {
+          if (verticalResizePointerIdRef.current !== e.pointerId) return;
+          verticalResizePointerIdRef.current = null;
+          onVerticalResizeEnd();
+        }}
+        onLostPointerCapture={() => {
+          verticalResizePointerIdRef.current = null;
+          onVerticalResizeEnd();
+        }}
+      />
       <div className={styles.panelScroll}>
         <div className={styles.loadBlock}>
           <input

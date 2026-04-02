@@ -34,10 +34,22 @@ const SETTINGS_PANEL_WIDTH_STORAGE_KEY = 'spines-player:settings-panel-width'
 const SETTINGS_PANEL_WIDTH_MIN = 240
 const SETTINGS_PANEL_WIDTH_MAX = 520
 const SETTINGS_PANEL_WIDTH_DEFAULT = 280
+const SETTINGS_PANEL_HEIGHT_STORAGE_KEY = 'spines-player:settings-panel-height'
+const SETTINGS_PANEL_HEIGHT_MIN = 280
 
 function getSettingsPanelMaxWidth(): number {
   if (typeof window === 'undefined') return SETTINGS_PANEL_WIDTH_MAX
   return Math.max(SETTINGS_PANEL_WIDTH_MAX, Math.floor(window.innerWidth * 0.5))
+}
+
+function getSettingsPanelDefaultHeight(): number {
+  if (typeof window === 'undefined') return 640
+  return Math.floor(window.innerHeight * 0.8)
+}
+
+function getSettingsPanelMaxHeight(): number {
+  if (typeof window === 'undefined') return 960
+  return Math.floor(window.innerHeight * 0.95)
 }
 
 type CustomSpinePack = {
@@ -86,6 +98,19 @@ export default function App() {
     startWidth: number
   } | null>(null)
   const settingsPanelResizePointerIdRef = useRef<number | null>(null)
+  const [settingsPanelHeight, setSettingsPanelHeight] = useState(() => {
+    if (typeof window === 'undefined') return getSettingsPanelDefaultHeight()
+    const raw = window.localStorage.getItem(SETTINGS_PANEL_HEIGHT_STORAGE_KEY)
+    const n = Number(raw)
+    const max = getSettingsPanelMaxHeight()
+    const fallback = getSettingsPanelDefaultHeight()
+    if (!Number.isFinite(n)) return Math.max(SETTINGS_PANEL_HEIGHT_MIN, Math.min(max, fallback))
+    return Math.max(SETTINGS_PANEL_HEIGHT_MIN, Math.min(max, Math.round(n)))
+  })
+  const settingsPanelVerticalResizeRef = useRef<{
+    startY: number
+    startHeight: number
+  } | null>(null)
 
   const [isCoarsePointer, setIsCoarsePointer] = useState(
     () =>
@@ -133,6 +158,13 @@ export default function App() {
       String(settingsPanelWidth),
     )
   }, [settingsPanelWidth])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      SETTINGS_PANEL_HEIGHT_STORAGE_KEY,
+      String(settingsPanelHeight),
+    )
+  }, [settingsPanelHeight])
 
   useEffect(() => {
     if (!isCoarsePointer) {
@@ -402,6 +434,32 @@ export default function App() {
     settingsPanelResizeRef.current = null
   }, [])
 
+  const handleSettingsVerticalResizeStart = useCallback(
+    (clientY: number) => {
+      settingsPanelVerticalResizeRef.current = {
+        startY: clientY,
+        startHeight: settingsPanelHeight,
+      }
+    },
+    [settingsPanelHeight],
+  )
+
+  const handleSettingsVerticalResizeMove = useCallback((clientY: number) => {
+    const drag = settingsPanelVerticalResizeRef.current
+    if (!drag) return
+    const delta = drag.startY - clientY
+    const max = getSettingsPanelMaxHeight()
+    const next = Math.max(
+      SETTINGS_PANEL_HEIGHT_MIN,
+      Math.min(max, Math.round(drag.startHeight + delta)),
+    )
+    setSettingsPanelHeight(next)
+  }, [])
+
+  const handleSettingsVerticalResizeEnd = useCallback(() => {
+    settingsPanelVerticalResizeRef.current = null
+  }, [])
+
   const handlePlayerBackgroundImageChange = useCallback((file: File | null) => {
     setPlayerBackgroundImage((prev) => {
       if (prev) {
@@ -536,6 +594,10 @@ export default function App() {
               spineLoadError={spineLoadError}
               loadedSpineName={loadedSpineName}
               panelWidth={settingsPanelWidth}
+              panelHeight={settingsPanelHeight}
+              onVerticalResizeStart={handleSettingsVerticalResizeStart}
+              onVerticalResizeMove={handleSettingsVerticalResizeMove}
+              onVerticalResizeEnd={handleSettingsVerticalResizeEnd}
               onClose={() => setSettingsPanelOpen(false)}
             />
             <button

@@ -12,6 +12,7 @@
   --settings-secondary-hover: #4e4e4e;
 
   --settings-panel-width: 280px;
+  --settings-panel-height: 640px;
 
   position: relative;
   flex: 0 0 var(--settings-panel-width);
@@ -38,6 +39,10 @@
   flex-direction: column;
   gap: 0;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.topResizeHandle {
+  display: none;
 }
 
 .panelScroll {
@@ -487,14 +492,45 @@
     max-width: none;
     max-height: none;
     align-self: auto;
-    height: 80vh;
-    height: 80dvh;
+    height: min(95dvh, var(--settings-panel-height));
     border-radius: 12px 12px 0 0;
     z-index: 101;
     box-shadow:
       0 -12px 40px rgba(0, 0, 0, 0.5),
       0 -1px 0 rgba(255, 255, 255, 0.06) inset;
     animation: settingsPanelSlideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .topResizeHandle {
+    display: block;
+    width: 100%;
+    height: 16px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: ns-resize;
+    touch-action: none;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 44px;
+      height: 3px;
+      margin: 7px auto 0;
+      border-radius: 999px;
+      background: rgba(152, 152, 152, 0.35);
+      transition: background-color 0.15s ease;
+    }
+
+    &:hover::before,
+    &:focus-visible::before {
+      background: rgba(0, 120, 212, 0.9);
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
   }
 
   .panelFooter {
