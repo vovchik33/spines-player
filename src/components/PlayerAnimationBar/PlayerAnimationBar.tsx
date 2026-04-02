@@ -131,10 +131,10 @@ export function PlayerAnimationBar({
     }
     scrubDraggingRef.current = true
     setScrubDragging(true)
-    e.currentTarget.setPointerCapture(e.pointerId)
-    requestAnimationFrame(() =>
-      applyScrubValue(Number(e.currentTarget.value)),
-    )
+    const target = e.currentTarget
+    const nextValue = Number(target.value)
+    target.setPointerCapture(e.pointerId)
+    requestAnimationFrame(() => applyScrubValue(nextValue))
   }
 
   const handleScrubPointerUp = (e: PointerEvent<HTMLInputElement>) => {
