@@ -308,7 +308,6 @@ export default function App() {
   const resetLayout = () => {
     console.log('[App] Reset layout (spine scale + pan + renderer remeasure)')
     setCanvasScale(INITIAL_CANVAS_SCALE)
-    setAnimationSpeed(INITIAL_ANIMATION_SPEED)
     setLayoutResetToken((n) => n + 1)
   }
 
