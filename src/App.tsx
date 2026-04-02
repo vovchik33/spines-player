@@ -160,6 +160,10 @@ export default function App() {
     setPlaybackTransport('stopped')
   }, [])
 
+  const handleNonLoopAnimationComplete = useCallback(() => {
+    setPlaybackTransport('stopped')
+  }, [])
+
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
   const [animationSpeed, setAnimationSpeed] = useState(INITIAL_ANIMATION_SPEED)
   const [layoutResetToken, setLayoutResetToken] = useState(0)
@@ -484,6 +488,7 @@ export default function App() {
               }}
               onAnimationFrames={onAnimationFrames}
               onAnimationProgressNormalized={onAnimationProgressNormalized}
+              onNonLoopAnimationComplete={handleNonLoopAnimationComplete}
             />
             <PlayerAnimationBar
               spinePlayerRef={spinePlayerRef}

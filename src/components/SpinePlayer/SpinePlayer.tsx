@@ -240,6 +240,8 @@ interface Props {
   onAnimationFrames?: (info: SpineAnimationFrameInfo | null) => void;
   /** Track 0 position ∈ [0, 1] by duration; emitted on the Pixi ticker when track 0 has a clip. */
   onAnimationProgressNormalized?: (normalized: number) => void;
+  /** Fired once when a non-looping track reaches the end while playback transport is playing. */
+  onNonLoopAnimationComplete?: () => void;
   /** Wheel over canvas: positive delta zooms in, negative zooms out (caller should clamp). */
   onSpineScaleDelta?: (delta: number) => void;
   /** Shift + wheel over canvas: delta adjusts playback speed like the slider (caller clamps). */
@@ -349,6 +351,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       onAnimationsLoaded,
       onAnimationFrames,
       onAnimationProgressNormalized,
+      onNonLoopAnimationComplete,
       onSpineScaleDelta,
       onAnimationSpeedDelta,
     },
@@ -366,6 +369,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
   const onAnimationsLoadedRef = useRef(onAnimationsLoaded);
   const onAnimationFramesRef = useRef(onAnimationFrames);
   const onAnimationProgressNormalizedRef = useRef(onAnimationProgressNormalized);
+  const onNonLoopAnimationCompleteRef = useRef(onNonLoopAnimationComplete);
   const onSpineScaleDeltaRef = useRef(onSpineScaleDelta);
   const onAnimationSpeedDeltaRef = useRef(onAnimationSpeedDelta);
   const playbackTransportRef = useRef(playbackTransport);
@@ -401,6 +405,10 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
   useEffect(() => {
     onAnimationProgressNormalizedRef.current = onAnimationProgressNormalized;
   }, [onAnimationProgressNormalized]);
+
+  useEffect(() => {
+    onNonLoopAnimationCompleteRef.current = onNonLoopAnimationComplete;
+  }, [onNonLoopAnimationComplete]);
 
   useEffect(() => {
     playbackTransportRef.current = playbackTransport;
@@ -767,14 +775,17 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
       );
 
       let lastFrameEmitKey = '';
+      let didEmitNonLoopComplete = false;
       const onFramesTick = () => {
         const framesCb = onAnimationFramesRef.current;
         const progressCb = onAnimationProgressNormalizedRef.current;
-        if (!framesCb && !progressCb) return;
+        const completeCb = onNonLoopAnimationCompleteRef.current;
+        if (!framesCb && !progressCb && !completeCb) return;
         const spineNow = spineRef.current;
         if (!spineNow) return;
         const track = spineNow.state.tracks[0];
         if (!track?.animation) {
+          didEmitNonLoopComplete = false;
           if (framesCb && lastFrameEmitKey !== '—') {
             lastFrameEmitKey = '—';
             framesCb(null);
@@ -784,6 +795,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
         }
         const duration = track.animationEnd - track.animationStart;
         if (duration <= 0) {
+          didEmitNonLoopComplete = false;
           if (framesCb) {
             const key = '1/1';
             if (key !== lastFrameEmitKey) {
@@ -795,6 +807,17 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
           return;
         }
         const local = Math.max(0, track.getAnimationTime() - track.animationStart);
+        const progress = Math.min(1, local / duration);
+        const isNonLoopEnd =
+          !track.loop &&
+          progress >= 1 &&
+          playbackTransportRef.current === 'playing';
+        if (isNonLoopEnd && !didEmitNonLoopComplete) {
+          didEmitNonLoopComplete = true;
+          completeCb?.();
+        } else if (!isNonLoopEnd) {
+          didEmitNonLoopComplete = false;
+        }
         if (framesCb) {
           const total = Math.max(1, Math.ceil(duration * SPINE_FRAME_COUNTER_FPS));
           const idx0 = Math.floor(local * SPINE_FRAME_COUNTER_FPS);
@@ -805,7 +828,7 @@ export const Pixi8SpinePlayer = forwardRef<Pixi8SpinePlayerHandle, Props>(
             framesCb({ current, total });
           }
         }
-        progressCb?.(Math.min(1, local / duration));
+        progressCb?.(progress);
       };
       app.ticker.add(onFramesTick);
       detachFrameTicker = () => {
