@@ -65,6 +65,10 @@ type PlayerBackgroundImage = {
   url: string
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
 function skeletonFileDisplayName(file: File): string {
   return file.name.replace(/\.(json|skel)$/i, '') || file.name
 }
@@ -244,6 +248,10 @@ export default function App() {
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
   const [spineLoadError, setSpineLoadError] = useState<string | null>(null)
+  const [spineJsonRoot, setSpineJsonRoot] = useState<Record<string, unknown> | null>(
+    null,
+  )
+  const [spineJsonError, setSpineJsonError] = useState<string | null>(null)
 
   const customSpineRef = useRef<CustomSpinePack | null>(null)
   const playerBackgroundImageUrlRef = useRef<string | null>(null)
@@ -255,6 +263,35 @@ export default function App() {
   useEffect(() => {
     playerBackgroundImageUrlRef.current = playerBackgroundImage?.url ?? null
   }, [playerBackgroundImage])
+
+  useEffect(() => {
+    if (customSpine) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(defaultSkeletonUrl)
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`)
+        }
+        const parsed: unknown = await res.json()
+        if (!isRecord(parsed)) {
+          throw new Error('Invalid JSON root')
+        }
+        if (cancelled) return
+        setSpineJsonRoot(parsed)
+        setSpineJsonError(null)
+      } catch (e) {
+        if (cancelled) return
+        const msg = e instanceof Error ? e.message : 'Failed to load JSON'
+        console.warn('[App] Could not load default Spine JSON tree', msg)
+        setSpineJsonRoot(null)
+        setSpineJsonError(`Could not load Spine JSON tree: ${msg}`)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [customSpine, defaultSkeletonUrl])
 
   useEffect(() => {
     return () => {
@@ -365,6 +402,26 @@ export default function App() {
       return
     }
     try {
+      if (/\.json$/i.test(r.skeleton.name)) {
+        try {
+          const parsed: unknown = JSON.parse(await r.skeleton.text())
+          if (!isRecord(parsed)) {
+            throw new Error('JSON root must be an object')
+          }
+          setSpineJsonRoot(parsed)
+          setSpineJsonError(null)
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Invalid JSON'
+          setSpineJsonRoot(null)
+          setSpineJsonError(`Could not parse skeleton JSON: ${msg}`)
+        }
+      } else {
+        setSpineJsonRoot(null)
+        setSpineJsonError(
+          'Spine tree preview is available for .json skeleton files only.',
+        )
+      }
+
       const atlasPageName = await getAtlasPageName(r.atlas)
       const urls = createSpineObjectUrls({
         skeleton: r.skeleton,
@@ -593,6 +650,8 @@ export default function App() {
               onLoadSpineFiles={handleLoadSpineFiles}
               spineLoadError={spineLoadError}
               loadedSpineName={loadedSpineName}
+              spineJsonRoot={spineJsonRoot}
+              spineJsonError={spineJsonError}
               panelWidth={settingsPanelWidth}
               panelHeight={settingsPanelHeight}
               onVerticalResizeStart={handleSettingsVerticalResizeStart}

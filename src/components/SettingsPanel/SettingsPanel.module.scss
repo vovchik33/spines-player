@@ -176,6 +176,61 @@
   color: #f48771;
 }
 
+.jsonTreeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jsonTreeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jsonTree {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jsonTreeSection {
+  border: 1px solid var(--settings-border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  padding: 4px 6px 6px;
+}
+
+.jsonTreeSummary {
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--settings-fg);
+}
+
+.jsonNameList {
+  margin: 6px 0 0;
+  padding: 0 0 0 14px;
+  font-size: 11px;
+  color: var(--settings-fg-dim);
+}
+
+.jsonRaw {
+  margin: 6px 0 0;
+  padding: 6px;
+  overflow: auto;
+  max-height: 180px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #d0d0d7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .field {
   display: flex;
   flex-direction: column;

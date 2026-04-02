@@ -1,4 +1,4 @@
-import React, { useRef, type CSSProperties } from "react";
+import React, { useRef, useState, type CSSProperties } from "react";
 import type { SpinePlaybackTransport } from "../SpinePlayer/SpinePlayer";
 import {
   SPINE_ANIMATION_SPEED_MAX,
@@ -55,6 +55,40 @@ const rangeReleaseFocusProps = {
   },
 };
 
+function asRecord(v: unknown): Record<string, unknown> | null {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return null;
+  return v as Record<string, unknown>;
+}
+
+function readName(v: unknown): string {
+  const raw = asRecord(v)?.name;
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
+function extractNamedList(section: string, value: unknown): string[] {
+  if (section === "animations") {
+    if (Array.isArray(value)) {
+      return value.map((item) => readName(item)).filter(Boolean);
+    }
+    const obj = asRecord(value);
+    return obj ? Object.keys(obj) : [];
+  }
+
+  if (section === "skins") {
+    if (Array.isArray(value)) {
+      return value.map((item) => readName(item)).filter(Boolean);
+    }
+    const obj = asRecord(value);
+    return obj ? Object.keys(obj) : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => readName(item)).filter(Boolean);
+  }
+
+  return [];
+}
+
 export interface SettingsPanelProps {
   animations: string[];
   selectedAnimation: string;
@@ -79,6 +113,8 @@ export interface SettingsPanelProps {
   spineLoadError?: string | null;
   /** Shown left of the Load Spine control (bundled sample or skeleton file base name). */
   loadedSpineName: string;
+  spineJsonRoot: Record<string, unknown> | null;
+  spineJsonError: string | null;
   panelWidth: number;
   panelHeight: number;
   onVerticalResizeStart: (clientY: number) => void;
@@ -111,6 +147,8 @@ export function SettingsPanel({
   onLoadSpineFiles,
   spineLoadError,
   loadedSpineName,
+  spineJsonRoot,
+  spineJsonError,
   panelWidth,
   panelHeight,
   onVerticalResizeStart,
@@ -121,6 +159,7 @@ export function SettingsPanel({
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
+  const [jsonTreeVisible, setJsonTreeVisible] = useState(true);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
   const panelStyle = {
     "--settings-panel-width": `${panelWidth}px`,
@@ -211,6 +250,68 @@ export function SettingsPanel({
               {spineLoadError}
             </p>
           ) : null}
+        </div>
+        <div className={styles.jsonTreeBlock}>
+          <div className={styles.jsonTreeHeader}>
+            <p className={styles.shortcutsTitle}>Spine info</p>
+            <button
+              type="button"
+              className={styles.resetButton}
+              onClick={() => setJsonTreeVisible((v) => !v)}
+            >
+              {jsonTreeVisible ? "Hide" : "Show"}
+            </button>
+          </div>
+          {spineJsonError ? (
+            <p className={styles.loadError} role="alert">
+              {spineJsonError}
+            </p>
+          ) : null}
+          {spineJsonRoot ? (
+            jsonTreeVisible ? (
+              <div className={styles.jsonTree}>
+                {Object.entries(spineJsonRoot).map(([section, sectionValue]) => {
+                  const isNameOnlySection =
+                    section === "bones" ||
+                    section === "slots" ||
+                    section === "skins" ||
+                    section === "animations";
+                  const isRawSection = section === "skeleton" || section === "transform";
+                  const names = isNameOnlySection
+                    ? extractNamedList(section, sectionValue)
+                    : [];
+                  return (
+                    <details key={section} className={styles.jsonTreeSection}>
+                      <summary className={styles.jsonTreeSummary}>{section}</summary>
+                      {isNameOnlySection ? (
+                        names.length > 0 ? (
+                          <ul className={styles.jsonNameList}>
+                            {names.map((name, idx) => (
+                              <li key={`${section}-${idx}-${name}`}>{name}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className={styles.muted}>No names</p>
+                        )
+                      ) : isRawSection ? (
+                        <pre className={styles.jsonRaw}>
+                          {JSON.stringify(sectionValue, null, 2)}
+                        </pre>
+                      ) : (
+                        <p className={styles.muted}>
+                          {Array.isArray(sectionValue)
+                            ? `${sectionValue.length} items`
+                            : typeof sectionValue}
+                        </p>
+                      )}
+                    </details>
+                  );
+                })}
+              </div>
+            ) : null
+          ) : (
+            <p className={styles.muted}>Spine JSON tree is not available yet.</p>
+          )}
         </div>
         <div className={styles.animationBlock}>
           <div className={styles.animationRow}>
