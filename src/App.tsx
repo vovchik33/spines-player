@@ -75,8 +75,8 @@ function skeletonFileDisplayName(file: File): string {
 
 export default function App() {
   const base = import.meta.env.BASE_URL
-  const defaultSkeletonUrl = `${base}spine/Cat.json`
-  const defaultAtlasUrl = `${base}spine/Cat.atlas`
+  const defaultSkeletonUrl = `${base}spines/cat/Cat.json`
+  const defaultAtlasUrl = `${base}spines/cat/Cat.atlas`
 
   const [animation, setAnimation] = useState('1_Idle')
   const [animations, setAnimations] = useState<string[]>([])

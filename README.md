@@ -35,7 +35,7 @@ Loading a new pack **resets** spine **scale**, **animation speed**, and starts p
 
 ## Default sample
 
-If you do not load custom files, the app uses the bundled **Cat** skeleton from `public/spine/` (paths respect Vite `base`).
+If you do not load custom files, the app uses the bundled **Cat** skeleton from `public/spines/cat/` (paths respect Vite `base`).
 
 ## Animation list & playback
 
