@@ -773,6 +773,42 @@ export default function App() {
     [],
   )
 
+  const handleInsertSequenceItem = useCallback(
+    (fromIndex: number, insertIndex: number) => {
+      setAnimationSequence((prev) => {
+        if (
+          fromIndex < 0 ||
+          insertIndex < 0 ||
+          fromIndex >= prev.length ||
+          insertIndex > prev.length
+        ) {
+          return prev
+        }
+        const adjustedInsert =
+          insertIndex > fromIndex ? insertIndex - 1 : insertIndex
+        if (adjustedInsert === fromIndex) return prev
+        const next = [...prev]
+        const moved = next[fromIndex]
+        next.splice(fromIndex, 1)
+        next.splice(adjustedInsert, 0, moved)
+        return next
+      })
+      setAnimationSequenceIndex((prevIndex) => {
+        const adjustedInsert =
+          insertIndex > fromIndex ? insertIndex - 1 : insertIndex
+        if (prevIndex === fromIndex) return adjustedInsert
+        if (prevIndex > fromIndex) {
+          prevIndex -= 1
+        }
+        if (prevIndex >= adjustedInsert) {
+          prevIndex += 1
+        }
+        return prevIndex
+      })
+    },
+    [],
+  )
+
   useEffect(() => {
     if (animationSequence.length === 0) {
       if (animationSequenceIndex !== 0) {
@@ -877,6 +913,7 @@ export default function App() {
               onDeleteSequenceItem={handleDeleteSequenceItem}
               onMoveSequenceItemUp={handleMoveSequenceItemUp}
               onMoveSequenceItemDown={handleMoveSequenceItemDown}
+              onInsertSequenceItem={handleInsertSequenceItem}
               playbackTransport={playbackTransport}
               animationLoop={effectiveAnimationLoop}
               onAnimationLoopChange={setAnimationLoop}

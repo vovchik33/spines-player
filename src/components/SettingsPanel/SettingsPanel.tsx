@@ -101,6 +101,7 @@ export interface SettingsPanelProps {
   onDeleteSequenceItem: (index: number) => void;
   onMoveSequenceItemUp: (index: number) => void;
   onMoveSequenceItemDown: (index: number) => void;
+  onInsertSequenceItem: (fromIndex: number, insertIndex: number) => void;
   playbackTransport: SpinePlaybackTransport;
   animationLoop: boolean;
   onAnimationLoopChange: (loop: boolean) => void;
@@ -146,6 +147,7 @@ export function SettingsPanel({
   onDeleteSequenceItem,
   onMoveSequenceItemUp,
   onMoveSequenceItemDown,
+  onInsertSequenceItem,
   playbackTransport,
   animationLoop,
   onAnimationLoopChange,
@@ -180,6 +182,8 @@ export function SettingsPanel({
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
   const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
+  const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
   const panelStyle = {
     "--settings-panel-width": `${panelWidth}px`,
@@ -359,7 +363,15 @@ export function SettingsPanel({
                   aria-label="Add selected animation to sequence"
                   title="Add selected animation to sequence"
                 >
-                  +
+                  <svg
+                    className={styles.addSequenceIcon}
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <rect x="4" y="4" width="9" height="9" fill="currentColor" opacity="0.5" />
+                    <rect x="7.5" y="7.5" width="9" height="9" fill="currentColor" opacity="0.75" />
+                    <rect x="11" y="11" width="9" height="9" fill="currentColor" />
+                  </svg>
                 </button>
               </>
             )}
@@ -384,7 +396,47 @@ export function SettingsPanel({
                       playbackTransport === "playing" && idx === animationSequenceIndex
                         ? styles.sequenceItemActive
                         : ""
+                    } ${
+                      dragFromIndex !== null && dragOverIndex === idx
+                        ? styles.sequenceItemInsertTop
+                        : ""
+                    } ${
+                      dragFromIndex !== null && dragOverIndex === idx + 1
+                        ? styles.sequenceItemInsertBottom
+                        : ""
                     }`}
+                    draggable
+                    onDragStart={(e) => {
+                      setDragFromIndex(idx);
+                      setDragOverIndex(null);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", String(idx));
+                    }}
+                    onDragOver={(e) => {
+                      if (dragFromIndex === null) return;
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      const r = e.currentTarget.getBoundingClientRect();
+                      const insertIndex =
+                        e.clientY < r.top + r.height / 2 ? idx : idx + 1;
+                      if (dragOverIndex !== insertIndex) {
+                        setDragOverIndex(insertIndex);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragFromIndex === null) return;
+                      const r = e.currentTarget.getBoundingClientRect();
+                      const insertIndex =
+                        e.clientY < r.top + r.height / 2 ? idx : idx + 1;
+                      onInsertSequenceItem(dragFromIndex, insertIndex);
+                      setDragFromIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    onDragEnd={() => {
+                      setDragFromIndex(null);
+                      setDragOverIndex(null);
+                    }}
                   >
                     <span className={styles.sequenceItemName}>{name}</span>
                     <span className={styles.sequenceItemActions}>
