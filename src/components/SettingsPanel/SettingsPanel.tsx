@@ -96,6 +96,7 @@ export interface SettingsPanelProps {
   animationSequence: string[];
   animationSequenceIndex: number;
   onAddAnimationToSequence: () => void;
+  onAddAnimationNameToSequence: (name: string) => void;
   onClearAnimationSequence: () => void;
   onCloneSequenceItem: (index: number) => void;
   onDeleteSequenceItem: (index: number) => void;
@@ -142,6 +143,7 @@ export function SettingsPanel({
   animationSequence,
   animationSequenceIndex,
   onAddAnimationToSequence,
+  onAddAnimationNameToSequence,
   onClearAnimationSequence,
   onCloneSequenceItem,
   onDeleteSequenceItem,
@@ -386,18 +388,55 @@ export function SettingsPanel({
                     >
                       {animations.map((name) => (
                         <li key={name} role="option" aria-selected={name === selectedAnimation}>
-                          <button
-                            type="button"
-                            className={`${styles.selectMenuItem} ${
+                          <div
+                            className={`${styles.selectMenuRow} ${
                               name === selectedAnimation ? styles.selectMenuItemSelected : ""
                             }`}
-                            onClick={() => {
-                              onAnimationChange(name);
-                              setAnimationDropdownOpen(false);
-                            }}
                           >
-                            {name}
-                          </button>
+                            <button
+                              type="button"
+                              className={styles.selectMenuItem}
+                              onClick={() => {
+                                onAnimationChange(name);
+                                setAnimationDropdownOpen(false);
+                              }}
+                            >
+                              {name}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.selectMenuAddButton}
+                              aria-label={`Add ${name} to sequence`}
+                              title="Add to sequence"
+                              onClick={() => {
+                                onAddAnimationNameToSequence(name);
+                              }}
+                            >
+                              <svg
+                                className={styles.selectMenuAddIcon}
+                                viewBox="0 0 24 24"
+                                aria-hidden
+                              >
+                                <rect
+                                  x="4"
+                                  y="4"
+                                  width="9"
+                                  height="9"
+                                  fill="currentColor"
+                                  opacity="0.5"
+                                />
+                                <rect
+                                  x="7.5"
+                                  y="7.5"
+                                  width="9"
+                                  height="9"
+                                  fill="currentColor"
+                                  opacity="0.75"
+                                />
+                                <rect x="11" y="11" width="9" height="9" fill="currentColor" />
+                              </svg>
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>

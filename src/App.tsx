@@ -703,6 +703,11 @@ export default function App() {
     setAnimationSequence((prev) => [...prev, selectedAnimation])
   }, [selectedAnimation])
 
+  const handleAddAnimationNameToSequence = useCallback((name: string) => {
+    if (!name) return
+    setAnimationSequence((prev) => [...prev, name])
+  }, [])
+
   const handleClearAnimationSequence = useCallback(() => {
     setAnimationSequence([])
     setAnimationSequenceIndex(0)
@@ -908,6 +913,7 @@ export default function App() {
               animationSequence={animationSequence}
               animationSequenceIndex={animationSequenceIndex}
               onAddAnimationToSequence={handleAddAnimationToSequence}
+              onAddAnimationNameToSequence={handleAddAnimationNameToSequence}
               onClearAnimationSequence={handleClearAnimationSequence}
               onCloneSequenceItem={handleCloneSequenceItem}
               onDeleteSequenceItem={handleDeleteSequenceItem}

@@ -622,6 +622,45 @@
   }
 }
 
+.selectMenuRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 2px;
+}
+
+.selectMenuAddButton {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  border: 1px solid var(--settings-border);
+  border-radius: 2px;
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 1px;
+  }
+}
+
+.selectMenuAddIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
 .selectMenuItemSelected {
   background: color-mix(in oklab, var(--settings-focus) 18%, transparent);
 }
