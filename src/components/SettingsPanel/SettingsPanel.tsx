@@ -183,7 +183,6 @@ export function SettingsPanel({
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const animationSelectRef = useRef<HTMLDivElement>(null);
-  const suppressNextDropdownToggleRef = useRef(false);
   const verticalResizePointerIdRef = useRef<number | null>(null);
   const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
@@ -200,7 +199,6 @@ export function SettingsPanel({
     const onPointerDown = (e: PointerEvent) => {
       if (!animationSelectRef.current) return;
       if (animationSelectRef.current.contains(e.target as Node)) return;
-      suppressNextDropdownToggleRef.current = true;
       setAnimationDropdownOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
@@ -374,13 +372,7 @@ export function SettingsPanel({
                     aria-haspopup="listbox"
                     aria-expanded={animationDropdownOpen}
                     aria-controls="animation-select-listbox"
-                    onClick={() => {
-                      if (suppressNextDropdownToggleRef.current) {
-                        suppressNextDropdownToggleRef.current = false;
-                        return;
-                      }
-                      setAnimationDropdownOpen((v) => !v);
-                    }}
+                    onClick={() => setAnimationDropdownOpen((v) => !v)}
                   >
                     <span className={styles.selectButtonLabel}>{selectedAnimation}</span>
                     <span className={styles.selectButtonChevron} aria-hidden>
