@@ -566,9 +566,14 @@
   align-items: center;
   justify-content: space-between;
   text-align: left;
+  padding: 5px 8px;
+  min-height: 30px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .selectButtonLabel {
+  font-size: 13px;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
