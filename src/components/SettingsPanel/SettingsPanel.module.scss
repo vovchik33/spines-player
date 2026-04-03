@@ -582,7 +582,13 @@
 
 .selectButtonChevron {
   margin-left: 8px;
+  display: inline-block;
   flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  transform: scaleX(1.15);
+  transform-origin: center;
   color: var(--settings-fg-dim);
 }
 
