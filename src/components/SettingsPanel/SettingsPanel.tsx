@@ -94,6 +94,7 @@ export interface SettingsPanelProps {
   selectedAnimation: string;
   onAnimationChange: (name: string) => void;
   animationSequence: string[];
+  animationSequenceIndex: number;
   onAddAnimationToSequence: () => void;
   onCloneSequenceItem: (index: number) => void;
   onDeleteSequenceItem: (index: number) => void;
@@ -137,6 +138,7 @@ export function SettingsPanel({
   selectedAnimation,
   onAnimationChange,
   animationSequence,
+  animationSequenceIndex,
   onAddAnimationToSequence,
   onCloneSequenceItem,
   onDeleteSequenceItem,
@@ -367,17 +369,33 @@ export function SettingsPanel({
             ) : (
               <ol className={styles.sequenceList}>
                 {animationSequence.map((name, idx) => (
-                  <li key={`${name}-${idx}`} className={styles.sequenceItem}>
+                  <li
+                    key={`${name}-${idx}`}
+                    className={`${styles.sequenceItem} ${
+                      playbackTransport === "playing" && idx === animationSequenceIndex
+                        ? styles.sequenceItemActive
+                        : ""
+                    }`}
+                  >
                     <span className={styles.sequenceItemName}>{name}</span>
                     <span className={styles.sequenceItemActions}>
                       <button
                         type="button"
                         className={styles.sequenceActionButton}
                         onClick={() => onCloneSequenceItem(idx)}
-                        aria-label={`Clone ${name} below`}
-                        title="Clone"
+                        aria-label={`Copy ${name} below`}
+                        title="Copy"
                       >
-                        Clone
+                        <svg
+                          className={styles.sequenceActionIcon}
+                          viewBox="0 0 24 24"
+                          aria-hidden
+                        >
+                          <path
+                            d="M9 9h11v11H9zM4 4h11v2H6v9H4z"
+                            fill="currentColor"
+                          />
+                        </svg>
                       </button>
                       <button
                         type="button"
@@ -386,7 +404,16 @@ export function SettingsPanel({
                         aria-label={`Delete ${name}`}
                         title="Delete"
                       >
-                        Del
+                        <svg
+                          className={styles.sequenceActionIcon}
+                          viewBox="0 0 24 24"
+                          aria-hidden
+                        >
+                          <path
+                            d="M9 4h6l1 2h4v2H4V6h4l1-2zm-2 6h2v8H7v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8z"
+                            fill="currentColor"
+                          />
+                        </svg>
                       </button>
                       <button
                         type="button"

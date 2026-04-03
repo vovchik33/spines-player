@@ -259,6 +259,8 @@ export default function App() {
       if (nextAnimation) {
         setAnimationSequenceIndex(nextIndex)
         setAnimation(nextAnimation)
+        // Force a restart even when next item has the same animation name.
+        setPlaybackNonce((n) => n + 1)
         return
       }
     }
@@ -863,6 +865,7 @@ export default function App() {
               selectedAnimation={selectedAnimation}
               onAnimationChange={setAnimation}
               animationSequence={animationSequence}
+              animationSequenceIndex={animationSequenceIndex}
               onAddAnimationToSequence={handleAddAnimationToSequence}
               onCloneSequenceItem={handleCloneSequenceItem}
               onDeleteSequenceItem={handleDeleteSequenceItem}
