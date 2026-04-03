@@ -461,24 +461,6 @@ export function SettingsPanel({
                       <button
                         type="button"
                         className={styles.sequenceActionButton}
-                        onClick={() => onDeleteSequenceItem(idx)}
-                        aria-label={`Delete ${name}`}
-                        title="Delete"
-                      >
-                        <svg
-                          className={styles.sequenceActionIcon}
-                          viewBox="0 0 24 24"
-                          aria-hidden
-                        >
-                          <path
-                            d="M9 4h6l1 2h4v2H4V6h4l1-2zm-2 6h2v8H7v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.sequenceActionButton}
                         onClick={() => onMoveSequenceItemUp(idx)}
                         disabled={idx === 0}
                         aria-label={`Move ${name} up`}
@@ -495,6 +477,24 @@ export function SettingsPanel({
                         title="Move down"
                       >
                         ↓
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sequenceActionButton}
+                        onClick={() => onDeleteSequenceItem(idx)}
+                        aria-label={`Delete ${name}`}
+                        title="Delete"
+                      >
+                        <svg
+                          className={styles.sequenceActionIcon}
+                          viewBox="0 0 24 24"
+                          aria-hidden
+                        >
+                          <path
+                            d="M9 4h6l1 2h4v2H4V6h4l1-2zm-2 6h2v8H7v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8z"
+                            fill="currentColor"
+                          />
+                        </svg>
                       </button>
                     </span>
                   </li>
