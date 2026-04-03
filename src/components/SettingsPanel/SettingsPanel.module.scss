@@ -287,7 +287,14 @@
 .sequenceBlock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+
+.sequenceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .sequenceTitle {
@@ -373,6 +380,33 @@
   width: 12px;
   height: 12px;
   flex-shrink: 0;
+}
+
+.clearSequenceButton {
+  border: 1px solid var(--settings-border);
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  border-radius: 2px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 1px;
+  }
 }
 
 .playbackRow {

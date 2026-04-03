@@ -96,6 +96,7 @@ export interface SettingsPanelProps {
   animationSequence: string[];
   animationSequenceIndex: number;
   onAddAnimationToSequence: () => void;
+  onClearAnimationSequence: () => void;
   onCloneSequenceItem: (index: number) => void;
   onDeleteSequenceItem: (index: number) => void;
   onMoveSequenceItemUp: (index: number) => void;
@@ -140,6 +141,7 @@ export function SettingsPanel({
   animationSequence,
   animationSequenceIndex,
   onAddAnimationToSequence,
+  onClearAnimationSequence,
   onCloneSequenceItem,
   onDeleteSequenceItem,
   onMoveSequenceItemUp,
@@ -364,7 +366,16 @@ export function SettingsPanel({
           </div>
           {animationSequence.length > 0 ? (
             <div className={styles.sequenceBlock}>
-              <p className={styles.sequenceTitle}>Animation sequence</p>
+              <div className={styles.sequenceHeader}>
+                <p className={styles.sequenceTitle}>Animation sequence</p>
+                <button
+                  type="button"
+                  className={styles.clearSequenceButton}
+                  onClick={onClearAnimationSequence}
+                >
+                  Clear
+                </button>
+              </div>
               <ol className={styles.sequenceList}>
                 {animationSequence.map((name, idx) => (
                   <li
