@@ -183,6 +183,7 @@ export function SettingsPanel({
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const animationSelectRef = useRef<HTMLDivElement>(null);
+  const animationDropdownCloseTimerRef = useRef<number | null>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
   const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
@@ -193,6 +194,15 @@ export function SettingsPanel({
     "--settings-panel-width": `${panelWidth}px`,
     "--settings-panel-height": `${panelHeight}px`,
   } as CSSProperties;
+
+  useEffect(() => {
+    return () => {
+      if (animationDropdownCloseTimerRef.current !== null) {
+        window.clearTimeout(animationDropdownCloseTimerRef.current);
+        animationDropdownCloseTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!animationDropdownOpen) return;
@@ -367,8 +377,22 @@ export function SettingsPanel({
                 <div
                   className={styles.animationSelectWrap}
                   ref={animationSelectRef}
-                  onMouseEnter={() => setAnimationDropdownOpen(true)}
-                  onMouseLeave={() => setAnimationDropdownOpen(false)}
+                  onMouseEnter={() => {
+                    if (animationDropdownCloseTimerRef.current !== null) {
+                      window.clearTimeout(animationDropdownCloseTimerRef.current);
+                      animationDropdownCloseTimerRef.current = null;
+                    }
+                    setAnimationDropdownOpen(true);
+                  }}
+                  onMouseLeave={() => {
+                    if (animationDropdownCloseTimerRef.current !== null) {
+                      window.clearTimeout(animationDropdownCloseTimerRef.current);
+                    }
+                    animationDropdownCloseTimerRef.current = window.setTimeout(() => {
+                      setAnimationDropdownOpen(false);
+                      animationDropdownCloseTimerRef.current = null;
+                    }, 300);
+                  }}
                 >
                   <button
                     id="animation-select"
