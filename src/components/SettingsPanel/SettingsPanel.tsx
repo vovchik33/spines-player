@@ -362,11 +362,9 @@ export function SettingsPanel({
               </>
             )}
           </div>
-          <div className={styles.sequenceBlock}>
-            <p className={styles.sequenceTitle}>Animation sequence</p>
-            {animationSequence.length === 0 ? (
-              <p className={styles.muted}>Sequence is empty.</p>
-            ) : (
+          {animationSequence.length > 0 ? (
+            <div className={styles.sequenceBlock}>
+              <p className={styles.sequenceTitle}>Animation sequence</p>
               <ol className={styles.sequenceList}>
                 {animationSequence.map((name, idx) => (
                   <li
@@ -439,8 +437,8 @@ export function SettingsPanel({
                   </li>
                 ))}
               </ol>
-            )}
-          </div>
+            </div>
+          ) : null}
           <div
             className={styles.playbackRow}
             role="group"
