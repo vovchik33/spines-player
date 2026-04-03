@@ -119,6 +119,7 @@ export interface SettingsPanelProps {
   onPlayerBackgroundColorChange: (color: string) => void;
   playerBackgroundImageName: string | null;
   onPlayerBackgroundImageChange: (file: File | null) => void;
+  onResetPlayerBackgroundTransform: () => void;
   onResetLayout: () => void;
   onLoadSpineFiles?: (files: File[]) => void;
   spineLoadError?: string | null;
@@ -166,6 +167,7 @@ export function SettingsPanel({
   onPlayerBackgroundColorChange,
   playerBackgroundImageName,
   onPlayerBackgroundImageChange,
+  onResetPlayerBackgroundTransform,
   onResetLayout,
   onLoadSpineFiles,
   spineLoadError,
@@ -791,6 +793,14 @@ export function SettingsPanel({
                 onClick={() => backgroundImageInputRef.current?.click()}
               >
                 ...
+              </button>
+              <button
+                type="button"
+                className={styles.resetButton}
+                disabled={!playerBackgroundImageName}
+                onClick={onResetPlayerBackgroundTransform}
+              >
+                Reset
               </button>
               <button
                 type="button"

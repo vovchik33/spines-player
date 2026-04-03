@@ -279,6 +279,10 @@ export default function App() {
     x: 0,
     y: 0,
   })
+  const resetPlayerBackgroundTransform = useCallback(() => {
+    setPlayerBackgroundScale(1)
+    setPlayerBackgroundOffset({ x: 0, y: 0 })
+  }, [])
   const [layoutResetToken, setLayoutResetToken] = useState(0)
   const [customSpine, setCustomSpine] = useState<CustomSpinePack | null>(null)
   const [spineLoadError, setSpineLoadError] = useState<string | null>(null)
@@ -401,8 +405,7 @@ export default function App() {
         if (e.repeat) return
         e.preventDefault()
         if (e.shiftKey) {
-          setPlayerBackgroundScale(1)
-          setPlayerBackgroundOffset({ x: 0, y: 0 })
+          resetPlayerBackgroundTransform()
           return
         }
         setCanvasScale(INITIAL_CANVAS_SCALE)
@@ -464,7 +467,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [resetPlayerBackgroundTransform])
 
   const handleLoadSpineFiles = useCallback(async (files: File[]) => {
     console.log('[App] Load Spine: picked files', files.length)
@@ -594,8 +597,7 @@ export default function App() {
   }, [])
 
   const handlePlayerBackgroundImageChange = useCallback((file: File | null) => {
-    setPlayerBackgroundScale(1)
-    setPlayerBackgroundOffset({ x: 0, y: 0 })
+    resetPlayerBackgroundTransform()
     setPlayerBackgroundImage((prev) => {
       if (prev) {
         URL.revokeObjectURL(prev.url)
@@ -611,7 +613,7 @@ export default function App() {
       const url = URL.createObjectURL(file)
       return { name: file.name, url }
     })
-  }, [])
+  }, [resetPlayerBackgroundTransform])
 
   const handlePlayerWheelCapture = useCallback(
     (e: ReactWheelEvent<HTMLElement>) => {
@@ -936,6 +938,7 @@ export default function App() {
               onPlayerBackgroundColorChange={setPlayerBackgroundColor}
               playerBackgroundImageName={playerBackgroundImage?.name ?? null}
               onPlayerBackgroundImageChange={handlePlayerBackgroundImageChange}
+              onResetPlayerBackgroundTransform={resetPlayerBackgroundTransform}
               onResetLayout={resetLayout}
               onLoadSpineFiles={handleLoadSpineFiles}
               spineLoadError={spineLoadError}
