@@ -96,6 +96,7 @@ export interface SettingsPanelProps {
   animationSequence: string[];
   animationSequenceIndex: number;
   playbackProgress1000: number;
+  sequenceProgressHidden: boolean;
   onAddAnimationToSequence: () => void;
   onAddAnimationNameToSequence: (name: string) => void;
   onClearAnimationSequence: () => void;
@@ -145,6 +146,7 @@ export function SettingsPanel({
   animationSequence,
   animationSequenceIndex,
   playbackProgress1000,
+  sequenceProgressHidden,
   onAddAnimationToSequence,
   onAddAnimationNameToSequence,
   onClearAnimationSequence,
@@ -526,10 +528,10 @@ export function SettingsPanel({
                   {animationSequence.map((name, idx) => (
                     (() => {
                       const isCurrent = idx === animationSequenceIndex;
-                      const isLast = idx === animationSequence.length - 1;
                       const showSequenceProgress =
                         isCurrent &&
-                        !(isLast && playbackTransport === "stopped");
+                        !sequenceProgressHidden &&
+                        playbackTransport !== "stopped";
                       return (
                     <li
                       key={`${name}-${idx}`}

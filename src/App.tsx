@@ -91,6 +91,7 @@ export default function App() {
   const [animations, setAnimations] = useState<string[]>([])
   const [animationSequence, setAnimationSequence] = useState<string[]>([])
   const [animationSequenceIndex, setAnimationSequenceIndex] = useState(0)
+  const [sequenceProgressHidden, setSequenceProgressHidden] = useState(false)
   const [playbackTransport, setPlaybackTransport] =
     useState<SpinePlaybackTransport>('playing')
   const [animationLoop, setAnimationLoop] = useState(true)
@@ -225,6 +226,7 @@ export default function App() {
 
   const handlePlay = useCallback(() => {
     const prev = playbackTransportRef.current
+    setSequenceProgressHidden(false)
     if (animationSequence.length > 0 && prev === 'stopped') {
       const first = animationSequence[0]
       if (first) {
@@ -702,20 +704,24 @@ export default function App() {
 
   const handleAddAnimationToSequence = useCallback(() => {
     if (!selectedAnimation) return
+    setSequenceProgressHidden(true)
     setAnimationSequence((prev) => [...prev, selectedAnimation])
   }, [selectedAnimation])
 
   const handleAddAnimationNameToSequence = useCallback((name: string) => {
     if (!name) return
+    setSequenceProgressHidden(true)
     setAnimationSequence((prev) => [...prev, name])
   }, [])
 
   const handleClearAnimationSequence = useCallback(() => {
+    setSequenceProgressHidden(true)
     setAnimationSequence([])
     setAnimationSequenceIndex(0)
   }, [])
 
   const handleCloneSequenceItem = useCallback((index: number) => {
+    setSequenceProgressHidden(true)
     setAnimationSequence((prev) => {
       if (index < 0 || index >= prev.length) return prev
       const next = [...prev]
@@ -728,6 +734,7 @@ export default function App() {
   }, [])
 
   const handleDeleteSequenceItem = useCallback((index: number) => {
+    setSequenceProgressHidden(true)
     setAnimationSequence((prev) => {
       if (index < 0 || index >= prev.length) return prev
       const next = [...prev]
@@ -746,6 +753,7 @@ export default function App() {
 
   const handleMoveSequenceItemUp = useCallback((index: number) => {
     if (index <= 0) return
+    setSequenceProgressHidden(true)
     setAnimationSequence((prev) => {
       if (index >= prev.length) return prev
       const next = [...prev]
@@ -763,6 +771,7 @@ export default function App() {
 
   const handleMoveSequenceItemDown = useCallback(
     (index: number) => {
+      setSequenceProgressHidden(true)
       setAnimationSequence((prev) => {
         if (index < 0 || index >= prev.length - 1) return prev
         const next = [...prev]
@@ -782,6 +791,7 @@ export default function App() {
 
   const handleInsertSequenceItem = useCallback(
     (fromIndex: number, insertIndex: number) => {
+      setSequenceProgressHidden(true)
       setAnimationSequence((prev) => {
         if (
           fromIndex < 0 ||
@@ -915,6 +925,7 @@ export default function App() {
               animationSequence={animationSequence}
               animationSequenceIndex={animationSequenceIndex}
               playbackProgress1000={playbackProgress1000}
+              sequenceProgressHidden={sequenceProgressHidden}
               onAddAnimationToSequence={handleAddAnimationToSequence}
               onAddAnimationNameToSequence={handleAddAnimationNameToSequence}
               onClearAnimationSequence={handleClearAnimationSequence}
