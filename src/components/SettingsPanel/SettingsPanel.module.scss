@@ -526,8 +526,12 @@
   background: var(--settings-input-bg);
   color: var(--settings-fg);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
+
+  option {
+    font-size: 14px;
+  }
 
   &:hover {
     background: var(--settings-input-bg-hover);
@@ -548,6 +552,78 @@
   flex: 1;
   min-width: 0;
   width: auto;
+}
+
+.animationSelectWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.selectButton {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.selectButtonLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectButtonChevron {
+  margin-left: 8px;
+  flex-shrink: 0;
+  color: var(--settings-fg-dim);
+}
+
+.selectMenu {
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+  border: 1px solid var(--settings-border);
+  border-radius: 3px;
+  background: var(--settings-input-bg);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  max-height: min(
+    50vh,
+    calc(
+      100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px
+    )
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.selectMenuItem {
+  width: 100%;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--settings-fg);
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  padding: 6px 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--settings-input-bg-hover);
+  }
+}
+
+.selectMenuItemSelected {
+  background: color-mix(in oklab, var(--settings-focus) 18%, transparent);
 }
 
 .muted {
@@ -716,6 +792,34 @@
 
 /* Tall/narrow viewports: width < height/1.5  ⟺  width/height < 2/3 */
 @media (max-aspect-ratio: 2/3) {
+  .animationRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label label'
+      'select add';
+    gap: 4px 6px;
+    align-items: center;
+
+    .label {
+      grid-area: label;
+    }
+  }
+
+  .selectInline {
+    grid-area: select;
+    min-width: 0;
+    font-size: 16px;
+
+    option {
+      font-size: 16px;
+    }
+  }
+
+  .addSequenceButton {
+    grid-area: add;
+  }
+
   .panel {
     flex: none;
     position: fixed;

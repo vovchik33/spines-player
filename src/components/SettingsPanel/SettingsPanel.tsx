@@ -1,4 +1,4 @@
-import React, { useRef, useState, type CSSProperties } from "react";
+import React, { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { SpinePlaybackTransport } from "../SpinePlayer/SpinePlayer";
 import {
   SPINE_ANIMATION_SPEED_MAX,
@@ -180,15 +180,37 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const spineFileInputRef = useRef<HTMLInputElement>(null);
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
+  const animationSelectRef = useRef<HTMLDivElement>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
   const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [animationDropdownOpen, setAnimationDropdownOpen] = useState(false);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
   const panelStyle = {
     "--settings-panel-width": `${panelWidth}px`,
     "--settings-panel-height": `${panelHeight}px`,
   } as CSSProperties;
+
+  useEffect(() => {
+    if (!animationDropdownOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!animationSelectRef.current) return;
+      if (animationSelectRef.current.contains(e.target as Node)) return;
+      setAnimationDropdownOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setAnimationDropdownOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [animationDropdownOpen]);
 
   return (
     <aside className={styles.panel} style={panelStyle} aria-label="Spine configuration">
@@ -340,21 +362,47 @@ export function SettingsPanel({
               <p className={styles.mutedInline}>Loading animations…</p>
             ) : (
               <>
-                <select
-                  id="animation-select"
-                  className={`${styles.select} ${styles.selectInline}`}
-                  value={selectedAnimation}
-                  onChange={(e) => {
-                    onAnimationChange(e.target.value);
-                    e.currentTarget.blur();
-                  }}
-                >
-                  {animations.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                <div className={styles.animationSelectWrap} ref={animationSelectRef}>
+                  <button
+                    id="animation-select"
+                    type="button"
+                    className={`${styles.select} ${styles.selectInline} ${styles.selectButton}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={animationDropdownOpen}
+                    aria-controls="animation-select-listbox"
+                    onClick={() => setAnimationDropdownOpen((v) => !v)}
+                  >
+                    <span className={styles.selectButtonLabel}>{selectedAnimation}</span>
+                    <span className={styles.selectButtonChevron} aria-hidden>
+                      ▾
+                    </span>
+                  </button>
+                  {animationDropdownOpen ? (
+                    <ul
+                      id="animation-select-listbox"
+                      role="listbox"
+                      aria-label="Animation"
+                      className={styles.selectMenu}
+                    >
+                      {animations.map((name) => (
+                        <li key={name} role="option" aria-selected={name === selectedAnimation}>
+                          <button
+                            type="button"
+                            className={`${styles.selectMenuItem} ${
+                              name === selectedAnimation ? styles.selectMenuItemSelected : ""
+                            }`}
+                            onClick={() => {
+                              onAnimationChange(name);
+                              setAnimationDropdownOpen(false);
+                            }}
+                          >
+                            {name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   className={styles.addSequenceButton}
