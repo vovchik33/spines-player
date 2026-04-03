@@ -254,6 +254,110 @@
   }
 }
 
+.addSequenceButton {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 2px;
+  border: 1px solid var(--settings-border);
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 2px;
+  }
+}
+
+.sequenceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sequenceTitle {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--settings-fg-muted);
+}
+
+.sequenceList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 116px;
+  overflow: auto;
+}
+
+.sequenceItem {
+  font-size: 12px;
+  color: var(--settings-fg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.sequenceItemName {
+  min-width: 0;
+  flex: 1;
+  word-break: break-word;
+}
+
+.sequenceItemActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sequenceActionButton {
+  border: 1px solid var(--settings-border);
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  border-radius: 2px;
+  padding: 1px 5px;
+  min-height: 20px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 1px;
+  }
+}
+
 .playbackRow {
   display: flex;
   flex-wrap: wrap;

@@ -93,9 +93,16 @@ export interface SettingsPanelProps {
   animations: string[];
   selectedAnimation: string;
   onAnimationChange: (name: string) => void;
+  animationSequence: string[];
+  onAddAnimationToSequence: () => void;
+  onCloneSequenceItem: (index: number) => void;
+  onDeleteSequenceItem: (index: number) => void;
+  onMoveSequenceItemUp: (index: number) => void;
+  onMoveSequenceItemDown: (index: number) => void;
   playbackTransport: SpinePlaybackTransport;
   animationLoop: boolean;
   onAnimationLoopChange: (loop: boolean) => void;
+  sequenceActive: boolean;
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
@@ -129,9 +136,16 @@ export function SettingsPanel({
   animations,
   selectedAnimation,
   onAnimationChange,
+  animationSequence,
+  onAddAnimationToSequence,
+  onCloneSequenceItem,
+  onDeleteSequenceItem,
+  onMoveSequenceItemUp,
+  onMoveSequenceItemDown,
   playbackTransport,
   animationLoop,
   onAnimationLoopChange,
+  sequenceActive,
   onPlay,
   onPause,
   onStop,
@@ -317,21 +331,87 @@ export function SettingsPanel({
             {animations.length === 0 ? (
               <p className={styles.mutedInline}>Loading animations…</p>
             ) : (
-              <select
-                id="animation-select"
-                className={`${styles.select} ${styles.selectInline}`}
-                value={selectedAnimation}
-                onChange={(e) => {
-                  onAnimationChange(e.target.value);
-                  e.currentTarget.blur();
-                }}
-              >
-                {animations.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
+              <>
+                <select
+                  id="animation-select"
+                  className={`${styles.select} ${styles.selectInline}`}
+                  value={selectedAnimation}
+                  onChange={(e) => {
+                    onAnimationChange(e.target.value);
+                    e.currentTarget.blur();
+                  }}
+                >
+                  {animations.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={styles.addSequenceButton}
+                  onClick={onAddAnimationToSequence}
+                  disabled={!selectedAnimation}
+                  aria-label="Add selected animation to sequence"
+                  title="Add selected animation to sequence"
+                >
+                  +
+                </button>
+              </>
+            )}
+          </div>
+          <div className={styles.sequenceBlock}>
+            <p className={styles.sequenceTitle}>Animation sequence</p>
+            {animationSequence.length === 0 ? (
+              <p className={styles.muted}>Sequence is empty.</p>
+            ) : (
+              <ol className={styles.sequenceList}>
+                {animationSequence.map((name, idx) => (
+                  <li key={`${name}-${idx}`} className={styles.sequenceItem}>
+                    <span className={styles.sequenceItemName}>{name}</span>
+                    <span className={styles.sequenceItemActions}>
+                      <button
+                        type="button"
+                        className={styles.sequenceActionButton}
+                        onClick={() => onCloneSequenceItem(idx)}
+                        aria-label={`Clone ${name} below`}
+                        title="Clone"
+                      >
+                        Clone
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sequenceActionButton}
+                        onClick={() => onDeleteSequenceItem(idx)}
+                        aria-label={`Delete ${name}`}
+                        title="Delete"
+                      >
+                        Del
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sequenceActionButton}
+                        onClick={() => onMoveSequenceItemUp(idx)}
+                        disabled={idx === 0}
+                        aria-label={`Move ${name} up`}
+                        title="Move up"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sequenceActionButton}
+                        onClick={() => onMoveSequenceItemDown(idx)}
+                        disabled={idx === animationSequence.length - 1}
+                        aria-label={`Move ${name} down`}
+                        title="Move down"
+                      >
+                        ↓
+                      </button>
+                    </span>
+                  </li>
                 ))}
-              </select>
+              </ol>
             )}
           </div>
           <div
@@ -394,9 +474,11 @@ export function SettingsPanel({
               className={styles.loopCheckbox}
               checked={animationLoop}
               onChange={(e) => onAnimationLoopChange(e.target.checked)}
-              disabled={!canPlayback}
+              disabled={!canPlayback || sequenceActive}
             />
-            <span>Loop animation</span>
+            <span>
+              {sequenceActive ? "Loop animation (off while sequence is active)" : "Loop animation"}
+            </span>
           </label>
         </div>
         <div className={styles.field}>

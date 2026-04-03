@@ -89,6 +89,8 @@ export default function App() {
 
   const [animation, setAnimation] = useState('1_Idle')
   const [animations, setAnimations] = useState<string[]>([])
+  const [animationSequence, setAnimationSequence] = useState<string[]>([])
+  const [animationSequenceIndex, setAnimationSequenceIndex] = useState(0)
   const [playbackTransport, setPlaybackTransport] =
     useState<SpinePlaybackTransport>('playing')
   const [animationLoop, setAnimationLoop] = useState(true)
@@ -223,11 +225,18 @@ export default function App() {
 
   const handlePlay = useCallback(() => {
     const prev = playbackTransportRef.current
+    if (animationSequence.length > 0 && prev === 'stopped') {
+      const first = animationSequence[0]
+      if (first) {
+        setAnimationSequenceIndex(0)
+        setAnimation(first)
+      }
+    }
     setPlaybackTransport('playing')
     if (prev === 'playing') {
       bumpPlayback()
     }
-  }, [bumpPlayback])
+  }, [animationSequence, bumpPlayback])
 
   /** Pause when playing; press again to resume (same as P key). */
   const handlePause = useCallback(() => {
@@ -244,8 +253,17 @@ export default function App() {
   }, [])
 
   const handleNonLoopAnimationComplete = useCallback(() => {
+    if (animationSequence.length > 0) {
+      const nextIndex = animationSequenceIndex + 1
+      const nextAnimation = animationSequence[nextIndex]
+      if (nextAnimation) {
+        setAnimationSequenceIndex(nextIndex)
+        setAnimation(nextAnimation)
+        return
+      }
+    }
     setPlaybackTransport('stopped')
-  }, [])
+  }, [animationSequence, animationSequenceIndex])
 
   const [canvasScale, setCanvasScale] = useState(INITIAL_CANVAS_SCALE)
   const [animationSpeed, setAnimationSpeed] = useState(INITIAL_ANIMATION_SPEED)
@@ -490,6 +508,8 @@ export default function App() {
       }
       console.log('[App] Load Spine: applying pack', { displayName, atlasPageNames })
       setAnimations([])
+      setAnimationSequence([])
+      setAnimationSequenceIndex(0)
       setPlaybackTransport('playing')
       setAnimationLoop(true)
       setCanvasScale(INITIAL_CANVAS_SCALE)
@@ -676,6 +696,102 @@ export default function App() {
         ? animation
         : animations[0]
 
+  const handleAddAnimationToSequence = useCallback(() => {
+    if (!selectedAnimation) return
+    setAnimationSequence((prev) => [...prev, selectedAnimation])
+  }, [selectedAnimation])
+
+  const handleCloneSequenceItem = useCallback((index: number) => {
+    setAnimationSequence((prev) => {
+      if (index < 0 || index >= prev.length) return prev
+      const next = [...prev]
+      next.splice(index + 1, 0, prev[index])
+      return next
+    })
+    setAnimationSequenceIndex((prevIndex) =>
+      prevIndex > index ? prevIndex + 1 : prevIndex,
+    )
+  }, [])
+
+  const handleDeleteSequenceItem = useCallback((index: number) => {
+    setAnimationSequence((prev) => {
+      if (index < 0 || index >= prev.length) return prev
+      const next = [...prev]
+      next.splice(index, 1)
+
+      setAnimationSequenceIndex((prevIndex) => {
+        if (next.length === 0) return 0
+        if (prevIndex < index) return prevIndex
+        if (prevIndex > index) return prevIndex - 1
+        return Math.min(index, next.length - 1)
+      })
+
+      return next
+    })
+  }, [])
+
+  const handleMoveSequenceItemUp = useCallback((index: number) => {
+    if (index <= 0) return
+    setAnimationSequence((prev) => {
+      if (index >= prev.length) return prev
+      const next = [...prev]
+      const tmp = next[index - 1]
+      next[index - 1] = next[index]
+      next[index] = tmp
+      return next
+    })
+    setAnimationSequenceIndex((prevIndex) => {
+      if (prevIndex === index) return prevIndex - 1
+      if (prevIndex === index - 1) return prevIndex + 1
+      return prevIndex
+    })
+  }, [])
+
+  const handleMoveSequenceItemDown = useCallback(
+    (index: number) => {
+      setAnimationSequence((prev) => {
+        if (index < 0 || index >= prev.length - 1) return prev
+        const next = [...prev]
+        const tmp = next[index + 1]
+        next[index + 1] = next[index]
+        next[index] = tmp
+        return next
+      })
+      setAnimationSequenceIndex((prevIndex) => {
+        if (prevIndex === index) return prevIndex + 1
+        if (prevIndex === index + 1) return prevIndex - 1
+        return prevIndex
+      })
+    },
+    [],
+  )
+
+  useEffect(() => {
+    if (animationSequence.length === 0) {
+      if (animationSequenceIndex !== 0) {
+        setAnimationSequenceIndex(0)
+      }
+      return
+    }
+    if (animationSequenceIndex >= animationSequence.length) {
+      setAnimationSequenceIndex(animationSequence.length - 1)
+      return
+    }
+
+    // Keep index stable for duplicate names while current sequence item already matches.
+    if (animationSequence[animationSequenceIndex] === animation) {
+      return
+    }
+
+    const idx = animationSequence.indexOf(animation)
+    if (idx >= 0 && idx !== animationSequenceIndex) {
+      setAnimationSequenceIndex(idx)
+    }
+  }, [animation, animationSequence, animationSequenceIndex])
+
+  const sequenceActive = animationSequence.length > 0
+  const effectiveAnimationLoop = sequenceActive ? false : animationLoop
+
   const skeletonUrl = customSpine?.skeletonUrl ?? defaultSkeletonUrl
   const atlasUrl = customSpine?.atlasUrl ?? defaultAtlasUrl
   const atlasImageMap = customSpine?.atlasImageMap
@@ -746,9 +862,16 @@ export default function App() {
               animations={animations}
               selectedAnimation={selectedAnimation}
               onAnimationChange={setAnimation}
+              animationSequence={animationSequence}
+              onAddAnimationToSequence={handleAddAnimationToSequence}
+              onCloneSequenceItem={handleCloneSequenceItem}
+              onDeleteSequenceItem={handleDeleteSequenceItem}
+              onMoveSequenceItemUp={handleMoveSequenceItemUp}
+              onMoveSequenceItemDown={handleMoveSequenceItemDown}
               playbackTransport={playbackTransport}
-              animationLoop={animationLoop}
+              animationLoop={effectiveAnimationLoop}
               onAnimationLoopChange={setAnimationLoop}
+              sequenceActive={sequenceActive}
               onPlay={handlePlay}
               onPause={handlePause}
               onStop={handleStop}
@@ -881,7 +1004,7 @@ export default function App() {
               atlasImageMap={atlasImageMap}
               animation={selectedAnimation}
               playbackTransport={playbackTransport}
-              animationLoop={animationLoop}
+              animationLoop={effectiveAnimationLoop}
               playbackNonce={playbackNonce}
               animationSpeed={animationSpeed}
               spineScale={canvasScale}
