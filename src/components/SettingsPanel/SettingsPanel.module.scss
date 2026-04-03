@@ -303,6 +303,12 @@
   gap: 8px;
 }
 
+.sequenceHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .sequenceTitle {
   margin: 0;
   font-size: 11px;

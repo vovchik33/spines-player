@@ -186,6 +186,7 @@ export function SettingsPanel({
   const animationDropdownCloseTimerRef = useRef<number | null>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
   const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
+  const [sequenceListVisible, setSequenceListVisible] = useState(true);
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [animationDropdownOpen, setAnimationDropdownOpen] = useState(false);
@@ -496,126 +497,137 @@ export function SettingsPanel({
             <div className={styles.sequenceBlock}>
               <div className={styles.sequenceHeader}>
                 <p className={styles.sequenceTitle}>Animation sequence</p>
-                <button
-                  type="button"
-                  className={styles.clearSequenceButton}
-                  onClick={onClearAnimationSequence}
-                >
-                  Clear
-                </button>
-              </div>
-              <ol className={styles.sequenceList}>
-                {animationSequence.map((name, idx) => (
-                  <li
-                    key={`${name}-${idx}`}
-                    className={`${styles.sequenceItem} ${
-                      playbackTransport === "playing" && idx === animationSequenceIndex
-                        ? styles.sequenceItemActive
-                        : ""
-                    } ${
-                      dragFromIndex !== null && dragOverIndex === idx
-                        ? styles.sequenceItemInsertTop
-                        : ""
-                    } ${
-                      dragFromIndex !== null && dragOverIndex === idx + 1
-                        ? styles.sequenceItemInsertBottom
-                        : ""
-                    }`}
-                    draggable
-                    onDragStart={(e) => {
-                      setDragFromIndex(idx);
-                      setDragOverIndex(null);
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", String(idx));
-                    }}
-                    onDragOver={(e) => {
-                      if (dragFromIndex === null) return;
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = "move";
-                      const r = e.currentTarget.getBoundingClientRect();
-                      const insertIndex =
-                        e.clientY < r.top + r.height / 2 ? idx : idx + 1;
-                      if (dragOverIndex !== insertIndex) {
-                        setDragOverIndex(insertIndex);
-                      }
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (dragFromIndex === null) return;
-                      const r = e.currentTarget.getBoundingClientRect();
-                      const insertIndex =
-                        e.clientY < r.top + r.height / 2 ? idx : idx + 1;
-                      onInsertSequenceItem(dragFromIndex, insertIndex);
-                      setDragFromIndex(null);
-                      setDragOverIndex(null);
-                    }}
-                    onDragEnd={() => {
-                      setDragFromIndex(null);
-                      setDragOverIndex(null);
-                    }}
+                <div className={styles.sequenceHeaderActions}>
+                  <button
+                    type="button"
+                    className={styles.clearSequenceButton}
+                    onClick={() => setSequenceListVisible((v) => !v)}
                   >
-                    <span className={styles.sequenceItemName}>{name}</span>
-                    <span className={styles.sequenceItemActions}>
-                      <button
-                        type="button"
-                        className={styles.sequenceActionButton}
-                        onClick={() => onCloneSequenceItem(idx)}
-                        aria-label={`Copy ${name} below`}
-                        title="Copy"
-                      >
-                        <svg
-                          className={styles.sequenceActionIcon}
-                          viewBox="0 0 24 24"
-                          aria-hidden
+                    {sequenceListVisible ? "Hide" : "Show"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.clearSequenceButton}
+                    onClick={onClearAnimationSequence}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              {sequenceListVisible ? (
+                <ol className={styles.sequenceList}>
+                  {animationSequence.map((name, idx) => (
+                    <li
+                      key={`${name}-${idx}`}
+                      className={`${styles.sequenceItem} ${
+                        playbackTransport === "playing" && idx === animationSequenceIndex
+                          ? styles.sequenceItemActive
+                          : ""
+                      } ${
+                        dragFromIndex !== null && dragOverIndex === idx
+                          ? styles.sequenceItemInsertTop
+                          : ""
+                      } ${
+                        dragFromIndex !== null && dragOverIndex === idx + 1
+                          ? styles.sequenceItemInsertBottom
+                          : ""
+                      }`}
+                      draggable
+                      onDragStart={(e) => {
+                        setDragFromIndex(idx);
+                        setDragOverIndex(null);
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", String(idx));
+                      }}
+                      onDragOver={(e) => {
+                        if (dragFromIndex === null) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        const r = e.currentTarget.getBoundingClientRect();
+                        const insertIndex =
+                          e.clientY < r.top + r.height / 2 ? idx : idx + 1;
+                        if (dragOverIndex !== insertIndex) {
+                          setDragOverIndex(insertIndex);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (dragFromIndex === null) return;
+                        const r = e.currentTarget.getBoundingClientRect();
+                        const insertIndex =
+                          e.clientY < r.top + r.height / 2 ? idx : idx + 1;
+                        onInsertSequenceItem(dragFromIndex, insertIndex);
+                        setDragFromIndex(null);
+                        setDragOverIndex(null);
+                      }}
+                      onDragEnd={() => {
+                        setDragFromIndex(null);
+                        setDragOverIndex(null);
+                      }}
+                    >
+                      <span className={styles.sequenceItemName}>{name}</span>
+                      <span className={styles.sequenceItemActions}>
+                        <button
+                          type="button"
+                          className={styles.sequenceActionButton}
+                          onClick={() => onCloneSequenceItem(idx)}
+                          aria-label={`Copy ${name} below`}
+                          title="Copy"
                         >
-                          <path
-                            d="M9 9h11v11H9zM4 4h11v2H6v9H4z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.sequenceActionButton}
-                        onClick={() => onMoveSequenceItemDown(idx)}
-                        disabled={idx === animationSequence.length - 1}
-                        aria-label={`Move ${name} down`}
-                        title="Move down"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.sequenceActionButton}
-                        onClick={() => onMoveSequenceItemUp(idx)}
-                        disabled={idx === 0}
-                        aria-label={`Move ${name} up`}
-                        title="Move up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.sequenceActionButton}
-                        onClick={() => onDeleteSequenceItem(idx)}
-                        aria-label={`Delete ${name}`}
-                        title="Delete"
-                      >
-                        <svg
-                          className={styles.sequenceActionIcon}
-                          viewBox="0 0 24 24"
-                          aria-hidden
+                          <svg
+                            className={styles.sequenceActionIcon}
+                            viewBox="0 0 24 24"
+                            aria-hidden
+                          >
+                            <path
+                              d="M9 9h11v11H9zM4 4h11v2H6v9H4z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.sequenceActionButton}
+                          onClick={() => onMoveSequenceItemDown(idx)}
+                          disabled={idx === animationSequence.length - 1}
+                          aria-label={`Move ${name} down`}
+                          title="Move down"
                         >
-                          <path
-                            d="M9 4h6l1 2h4v2H4V6h4l1-2zm-2 6h2v8H7v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  </li>
-                ))}
-              </ol>
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.sequenceActionButton}
+                          onClick={() => onMoveSequenceItemUp(idx)}
+                          disabled={idx === 0}
+                          aria-label={`Move ${name} up`}
+                          title="Move up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.sequenceActionButton}
+                          onClick={() => onDeleteSequenceItem(idx)}
+                          aria-label={`Delete ${name}`}
+                          title="Delete"
+                        >
+                          <svg
+                            className={styles.sequenceActionIcon}
+                            viewBox="0 0 24 24"
+                            aria-hidden
+                          >
+                            <path
+                              d="M9 4h6l1 2h4v2H4V6h4l1-2zm-2 6h2v8H7v-8zm4 0h2v8h-2v-8zm4 0h2v8h-2v-8z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
             </div>
           ) : null}
           <div
