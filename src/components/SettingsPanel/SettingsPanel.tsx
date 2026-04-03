@@ -364,7 +364,12 @@ export function SettingsPanel({
               <p className={styles.mutedInline}>Loading animations…</p>
             ) : (
               <>
-                <div className={styles.animationSelectWrap} ref={animationSelectRef}>
+                <div
+                  className={styles.animationSelectWrap}
+                  ref={animationSelectRef}
+                  onMouseEnter={() => setAnimationDropdownOpen(true)}
+                  onMouseLeave={() => setAnimationDropdownOpen(false)}
+                >
                   <button
                     id="animation-select"
                     type="button"

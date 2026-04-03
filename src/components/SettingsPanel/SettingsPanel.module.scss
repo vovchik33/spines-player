@@ -597,13 +597,13 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% + 2px);
+  top: 100%;
   margin: 0;
   padding: 3px;
   list-style: none;
   border: 1px solid var(--settings-border);
   border-radius: 3px;
-  background: var(--settings-input-bg);
+  background: color-mix(in oklab, var(--settings-input-bg) 78%, black);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
   max-height: min(
     50vh,
