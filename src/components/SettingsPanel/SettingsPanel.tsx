@@ -509,22 +509,22 @@ export function SettingsPanel({
                       <button
                         type="button"
                         className={styles.sequenceActionButton}
-                        onClick={() => onMoveSequenceItemUp(idx)}
-                        disabled={idx === 0}
-                        aria-label={`Move ${name} up`}
-                        title="Move up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.sequenceActionButton}
                         onClick={() => onMoveSequenceItemDown(idx)}
                         disabled={idx === animationSequence.length - 1}
                         aria-label={`Move ${name} down`}
                         title="Move down"
                       >
                         ↓
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sequenceActionButton}
+                        onClick={() => onMoveSequenceItemUp(idx)}
+                        disabled={idx === 0}
+                        aria-label={`Move ${name} up`}
+                        title="Move up"
+                      >
+                        ↑
                       </button>
                       <button
                         type="button"
