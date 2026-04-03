@@ -95,6 +95,7 @@ export interface SettingsPanelProps {
   onAnimationChange: (name: string) => void;
   animationSequence: string[];
   animationSequenceIndex: number;
+  playbackProgress1000: number;
   onAddAnimationToSequence: () => void;
   onAddAnimationNameToSequence: (name: string) => void;
   onClearAnimationSequence: () => void;
@@ -143,6 +144,7 @@ export function SettingsPanel({
   onAnimationChange,
   animationSequence,
   animationSequenceIndex,
+  playbackProgress1000,
   onAddAnimationToSequence,
   onAddAnimationNameToSequence,
   onClearAnimationSequence,
@@ -193,6 +195,9 @@ export function SettingsPanel({
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [animationDropdownOpen, setAnimationDropdownOpen] = useState(false);
   const canPlayback = animations.length > 0 && Boolean(selectedAnimation);
+  const sequenceProgress = Math.min(1, Math.max(0, playbackProgress1000 / 1000));
+  const sequenceProgressCircumference = 2 * Math.PI * 7;
+  const sequenceProgressDash = sequenceProgressCircumference * sequenceProgress;
   const panelStyle = {
     "--settings-panel-width": `${panelWidth}px`,
     "--settings-panel-height": `${panelHeight}px`,
@@ -519,6 +524,13 @@ export function SettingsPanel({
               {sequenceListVisible ? (
                 <ol className={styles.sequenceList}>
                   {animationSequence.map((name, idx) => (
+                    (() => {
+                      const isCurrent = idx === animationSequenceIndex;
+                      const isLast = idx === animationSequence.length - 1;
+                      const showSequenceProgress =
+                        isCurrent &&
+                        !(isLast && playbackTransport === "stopped");
+                      return (
                     <li
                       key={`${name}-${idx}`}
                       className={`${styles.sequenceItem} ${
@@ -567,7 +579,37 @@ export function SettingsPanel({
                         setDragOverIndex(null);
                       }}
                     >
-                      <span className={styles.sequenceItemName}>{name}</span>
+                      <span className={styles.sequenceItemName}>
+                        <span
+                          className={styles.sequenceProgress}
+                          aria-label={
+                            showSequenceProgress
+                              ? `Current animation progress ${Math.round(
+                                  sequenceProgress * 100,
+                                )}%`
+                              : undefined
+                          }
+                        >
+                          {showSequenceProgress ? (
+                            <svg viewBox="0 0 16 16" aria-hidden>
+                              <circle
+                                className={styles.sequenceProgressTrack}
+                                cx="8"
+                                cy="8"
+                                r="7"
+                              />
+                              <circle
+                                className={styles.sequenceProgressValue}
+                                cx="8"
+                                cy="8"
+                                r="7"
+                                strokeDasharray={`${sequenceProgressDash} ${sequenceProgressCircumference}`}
+                              />
+                            </svg>
+                          ) : null}
+                        </span>
+                        <span>{name}</span>
+                      </span>
                       <span className={styles.sequenceItemActions}>
                         <button
                           type="button"
@@ -627,6 +669,8 @@ export function SettingsPanel({
                         </button>
                       </span>
                     </li>
+                      );
+                    })()
                   ))}
                 </ol>
               ) : null}

@@ -914,6 +914,7 @@ export default function App() {
               onAnimationChange={setAnimation}
               animationSequence={animationSequence}
               animationSequenceIndex={animationSequenceIndex}
+              playbackProgress1000={playbackProgress1000}
               onAddAnimationToSequence={handleAddAnimationToSequence}
               onAddAnimationNameToSequence={handleAddAnimationNameToSequence}
               onClearAnimationSequence={handleClearAnimationSequence}

@@ -319,7 +319,8 @@
 
 .sequenceList {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -353,7 +354,38 @@
 .sequenceItemName {
   min-width: 0;
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   word-break: break-word;
+}
+
+.sequenceProgress {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    transform: rotate(-90deg);
+  }
+}
+
+.sequenceProgressTrack {
+  fill: none;
+  stroke: color-mix(in oklab, var(--settings-fg-muted) 45%, transparent);
+  stroke-width: 2;
+}
+
+.sequenceProgressValue {
+  fill: none;
+  stroke: var(--settings-focus);
+  stroke-linecap: round;
+  stroke-width: 2;
 }
 
 .sequenceItemActions {
