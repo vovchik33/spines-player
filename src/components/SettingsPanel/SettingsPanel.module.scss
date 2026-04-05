@@ -50,7 +50,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
@@ -110,13 +110,13 @@
 .loadBlock {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .loadRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7.5px;
   min-width: 0;
 }
 
@@ -162,6 +162,29 @@
   }
 }
 
+.loadButtonSecondary {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--settings-border);
+  background: var(--settings-secondary-bg);
+  color: var(--settings-fg);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--settings-secondary-hover);
+    border-color: #505050;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--settings-focus);
+    outline-offset: 2px;
+  }
+}
+
 .loadHint {
   margin: 0;
   font-size: 11px;
@@ -179,20 +202,13 @@
 .jsonTreeBlock {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.jsonTreeHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 4.5px;
 }
 
 .jsonTree {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4.5px;
 }
 
 .jsonTreeSection {
@@ -234,19 +250,19 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4.5px;
 }
 
 .animationBlock {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .animationRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7.5px;
   min-width: 0;
 
   .label {
@@ -293,20 +309,20 @@
 .sequenceBlock {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4.5px;
 }
 
 .sequenceHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sequenceHeaderActions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4.5px;
 }
 
 .sequenceTitle {
@@ -323,7 +339,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1.5px;
 }
 
 .sequenceItem {
@@ -332,7 +348,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4.5px;
   border: 1px solid transparent;
   border-radius: 3px;
   padding: 2px 4px;
@@ -356,7 +372,7 @@
   flex: 1;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4.5px;
   word-break: break-word;
 }
 
@@ -391,7 +407,7 @@
 .sequenceItemActions {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
 }
 
@@ -464,13 +480,13 @@
 .playbackRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4.5px;
 }
 
 .loopCheckboxRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
   font-size: 12px;
   line-height: 1.35;
@@ -499,7 +515,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4.5px;
   padding: 5px 8px;
   border-radius: 2px;
   border: 1px solid var(--settings-border);
@@ -674,7 +690,7 @@
 .selectMenuRow {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   border-radius: 2px;
 }
 
@@ -724,7 +740,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -732,14 +748,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
 .scaleHeaderActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -787,7 +803,7 @@
 .backgroundImageRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 6px;
   min-width: 0;
 }
@@ -805,7 +821,7 @@
 .backgroundImageActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -886,7 +902,7 @@
     grid-template-areas:
       'label label'
       'select add';
-    gap: 4px 6px;
+    gap: 3px 4.5px;
     align-items: center;
 
     .label {

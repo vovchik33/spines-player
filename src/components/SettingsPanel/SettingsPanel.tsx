@@ -306,6 +306,19 @@ export function SettingsPanel({
             >
               Open...
             </button>
+            <button
+              type="button"
+              className={
+                jsonTreeVisible ? styles.loadButton : styles.loadButtonSecondary
+              }
+              onClick={() => setJsonTreeVisible((v) => !v)}
+              aria-expanded={jsonTreeVisible}
+              aria-controls={
+                jsonTreeVisible && spineJsonRoot ? "spine-json-tree" : undefined
+              }
+            >
+              Info
+            </button>
           </div>
           {spineLoadError ? (
             <p className={styles.loadError} role="alert">
@@ -313,25 +326,20 @@ export function SettingsPanel({
             </p>
           ) : null}
         </div>
-        <div className={styles.jsonTreeBlock}>
-          <div className={styles.jsonTreeHeader}>
-            <p className={styles.shortcutsTitle}>Spine info</p>
-            <button
-              type="button"
-              className={styles.resetButton}
-              onClick={() => setJsonTreeVisible((v) => !v)}
-            >
-              {jsonTreeVisible ? "Hide" : "Show"}
-            </button>
-          </div>
-          {spineJsonError ? (
-            <p className={styles.loadError} role="alert">
-              {spineJsonError}
-            </p>
-          ) : null}
-          {spineJsonRoot ? (
-            jsonTreeVisible ? (
-              <div className={styles.jsonTree}>
+        {jsonTreeVisible ? (
+          <div className={styles.jsonTreeBlock}>
+            {spineJsonError ? (
+              <p className={styles.loadError} role="alert">
+                {spineJsonError}
+              </p>
+            ) : null}
+            {spineJsonRoot ? (
+              <div
+                id="spine-json-tree"
+                className={styles.jsonTree}
+                role="region"
+                aria-label="Spine skeleton details"
+              >
                 {Object.entries(spineJsonRoot).map(([section, sectionValue]) => {
                   const isNameOnlySection =
                     section === "bones" ||
@@ -370,11 +378,11 @@ export function SettingsPanel({
                   );
                 })}
               </div>
-            ) : null
-          ) : (
-            <p className={styles.muted}>Spine JSON tree is not available yet.</p>
-          )}
-        </div>
+            ) : (
+              <p className={styles.muted}>Spine JSON tree is not available yet.</p>
+            )}
+          </div>
+        ) : null}
         <div className={styles.animationBlock}>
           <div className={styles.animationRow}>
             <label className={styles.label} htmlFor="animation-select">
