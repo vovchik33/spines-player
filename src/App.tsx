@@ -39,11 +39,11 @@ const INITIAL_ANIMATION_SPEED = 1
 const INITIAL_PLAYER_BACKGROUND_COLOR = '#0a0a0e'
 const PLAYER_BACKGROUND_SCALE_MIN = 0.5
 const PLAYER_BACKGROUND_SCALE_MAX = 4
-const SETTINGS_PANEL_WIDTH_STORAGE_KEY = 'spines-player:settings-panel-width'
+const SETTINGS_PANEL_WIDTH_STORAGE_KEY = 'spine-player:settings-panel-width'
 const SETTINGS_PANEL_WIDTH_MIN = 240
 const SETTINGS_PANEL_WIDTH_MAX = 520
 const SETTINGS_PANEL_WIDTH_DEFAULT = 280
-const SETTINGS_PANEL_HEIGHT_STORAGE_KEY = 'spines-player:settings-panel-height'
+const SETTINGS_PANEL_HEIGHT_STORAGE_KEY = 'spine-player:settings-panel-height'
 const SETTINGS_PANEL_HEIGHT_MIN = 280
 
 function getSettingsPanelMaxWidth(): number {

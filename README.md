@@ -1,4 +1,4 @@
-# spines-player
+# spine-player
 
 Web viewer for [Spine](http://esotericsoftware.com/) skeletal animations: load skeleton data, atlas, and one or more atlas page images; then preview clips, playback, scale, speed, and background transforms.
 
