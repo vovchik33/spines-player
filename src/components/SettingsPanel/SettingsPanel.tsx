@@ -40,6 +40,8 @@ const SPINE_FILE_INPUT_ACCEPT = [
   "*/*",
 ].join(",");
 
+const ANIMATION_DROPDOWN_HOVER_OPEN_MS = 700;
+
 /** Drop focus after pointer drag/click; Escape for keyboard exit (arrows keep focus while adjusting). */
 const rangeReleaseFocusProps = {
   onPointerUp: (e: React.PointerEvent<HTMLInputElement>) => {
@@ -190,6 +192,7 @@ export function SettingsPanel({
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const animationSelectRef = useRef<HTMLDivElement>(null);
   const animationDropdownCloseTimerRef = useRef<number | null>(null);
+  const animationDropdownOpenTimerRef = useRef<number | null>(null);
   const verticalResizePointerIdRef = useRef<number | null>(null);
   const [jsonTreeVisible, setJsonTreeVisible] = useState(false);
   const [sequenceListVisible, setSequenceListVisible] = useState(true);
@@ -210,6 +213,10 @@ export function SettingsPanel({
       if (animationDropdownCloseTimerRef.current !== null) {
         window.clearTimeout(animationDropdownCloseTimerRef.current);
         animationDropdownCloseTimerRef.current = null;
+      }
+      if (animationDropdownOpenTimerRef.current !== null) {
+        window.clearTimeout(animationDropdownOpenTimerRef.current);
+        animationDropdownOpenTimerRef.current = null;
       }
     };
   }, []);
@@ -400,9 +407,19 @@ export function SettingsPanel({
                       window.clearTimeout(animationDropdownCloseTimerRef.current);
                       animationDropdownCloseTimerRef.current = null;
                     }
-                    setAnimationDropdownOpen(true);
+                    if (animationDropdownOpenTimerRef.current !== null) {
+                      window.clearTimeout(animationDropdownOpenTimerRef.current);
+                    }
+                    animationDropdownOpenTimerRef.current = window.setTimeout(() => {
+                      animationDropdownOpenTimerRef.current = null;
+                      setAnimationDropdownOpen(true);
+                    }, ANIMATION_DROPDOWN_HOVER_OPEN_MS);
                   }}
                   onMouseLeave={() => {
+                    if (animationDropdownOpenTimerRef.current !== null) {
+                      window.clearTimeout(animationDropdownOpenTimerRef.current);
+                      animationDropdownOpenTimerRef.current = null;
+                    }
                     if (animationDropdownCloseTimerRef.current !== null) {
                       window.clearTimeout(animationDropdownCloseTimerRef.current);
                     }
@@ -419,7 +436,13 @@ export function SettingsPanel({
                     aria-haspopup="listbox"
                     aria-expanded={animationDropdownOpen}
                     aria-controls="animation-select-listbox"
-                    onClick={() => setAnimationDropdownOpen((v) => !v)}
+                    onClick={() => {
+                      if (animationDropdownOpenTimerRef.current !== null) {
+                        window.clearTimeout(animationDropdownOpenTimerRef.current);
+                        animationDropdownOpenTimerRef.current = null;
+                      }
+                      setAnimationDropdownOpen((v) => !v);
+                    }}
                   >
                     <span className={styles.selectButtonLabel}>{selectedAnimation}</span>
                     <span className={styles.selectButtonChevron} aria-hidden>
